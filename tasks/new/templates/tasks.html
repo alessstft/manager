@@ -1,0 +1,722 @@
+<!-- <!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Управление бизнесом</title>
+    <link rel="stylesheet" href="static\css\styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <nav class="main-nav">
+                <a href="index">Главная</a>
+                <a href="projects">Проекты</a>
+                <!-- <a href="tasks">Задачи</a> -->
+<!-- <a href="team">Команда</a>
+            </nav>
+        </div>
+                <div><h1>Ваши задачи</h1></div>
+    </header>
+</body>
+</html> -->
+-->
+
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мои задачи</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Custom CSS -->
+    <style>
+      :root {
+        --primary-color: #46344e;
+        --secondary-color: #9b786f;
+        --accent-color: #d2632b;
+        --dark-color: #2b2d42;
+        --light-color: #46344e;
+        --text-color: #333;
+        --text-light: #9b786f;
+        --white: #9d8d8fc6;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+        color: var(--dark-color);
+      }
+
+      .task-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: white;
+        border-radius: 10px 10px 0 0;
+        padding: 20px;
+      }
+
+      .task-container {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+
+      .task-card {
+        border-left: 4px solid var(--accent-color);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        margin-bottom: 15px;
+      }
+
+      .task-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .task-card.high-priority {
+        border-left-color: var(--danger-color);
+      }
+
+      .task-card.medium-priority {
+        border-left-color: var(--warning-color);
+      }
+
+      .task-card.low-priority {
+        border-left-color: var(--success-color);
+      }
+
+      .priority-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 10px;
+        font-weight: 500;
+      }
+
+      .status-badge {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-weight: 500;
+      }
+
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .task-detail-item {
+        margin-bottom: 15px;
+      }
+
+      .task-detail-label {
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 5px;
+      }
+
+      .task-actions .btn {
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-weight: 500;
+      }
+
+      .comment-card {
+        border-left: 3px solid var(--accent-color);
+        border-radius: 6px;
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 4px 10px;
+        background-color: #e9ecef;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        margin-right: 5px;
+        margin-bottom: 5px;
+      }
+
+      .task-tabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+        border: none;
+        padding: 10px 20px;
+      }
+
+      .task-tabs .nav-link.active {
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        background: transparent;
+      }
+
+      .progress-thin {
+        height: 6px;
+      }
+
+      .file-attachment {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+
+      .file-icon {
+        font-size: 1.5rem;
+        margin-right: 10px;
+        color: #6c757d;
+      }
+    </style>
+  </head>
+  <body>
+       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <i class="fas fa-project-diagram me-2"></i>МыМыМы
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+
+            </li class="nav-item">
+            <a class="nav-link" href="index">
+            <i class="fas fa-home-user me-1"></i>Главная</a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="projects"
+                ><i class="fas fa-r-project"></i> Проекты</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="tasks"
+                ><i class="fas fa-tasks me-1"></i> Задачи</a
+              >
+
+            
+            <li class="nav-item">
+              <a class="nav-link" href="#"
+                ><i class="fas fa-calendar-alt me-1"></i> Календарь</a
+              >
+            </li>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="navbarDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+              >
+                <img
+                  src="https://storage.yandexcloud.net/stage01-metronews-transfer/media/20220519/21/14/858x540_a4e5250c_4g0lvtks.jpg"
+                  class="avatar me-1"
+                />
+                Алеся А.
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" href="#"
+                    ><i class="fas fa-user me-2"></i>Профиль</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="#"
+                    ><i class="fas fa-cog me-2"></i>Настройки</a
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="#"
+                    ><i class="fas fa-sign-out-alt me-2"></i>Выход</a
+                  >
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container py-4">
+      <!-- Заголовок и кнопки -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-tasks me-2"></i>Мои задачи</h2>
+        <div>
+          <button class="btn btn-primary me-2">
+            <i class="fas fa-plus me-2"></i>Новая задача
+          </button>
+          <button class="btn btn-outline-secondary">
+            <i class="fas fa-filter me-2"></i>Фильтры
+          </button>
+        </div>
+      </div>
+
+      
+
+      <!-- Основной контейнер -->
+      <div class="task-container">
+        <!-- Заголовок задачи -->
+        <div
+          class="task-header d-flex justify-content-between align-items-center"
+        >
+          <div>
+            <h4 class="mb-0 text-white">
+              Разработка API для авторизации пользователей
+            </h4>
+            <p class="mb-0 text-white-50">Проект: Веб-сайт компании</p>
+          </div>
+          <div>
+            <span class="status-badge bg-light text-dark">
+              <i class="fas fa-circle-notch me-1"></i>В работе
+            </span>
+          </div>
+        </div>
+
+        <div class="p-4">
+          <div class="row">
+            <div class="col-lg-8">
+              <ul class="nav task-tabs mb-4">
+                <li class="nav-item">
+                  <a
+                    class="nav-link active"
+                    href="#details"
+                    data-bs-toggle="tab"
+                    >Детали</a
+                  >
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#comments" data-bs-toggle="tab"
+                    >Комментарии</a
+                  >
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#files" data-bs-toggle="tab"
+                    >Файлы</a
+                  >
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#history" data-bs-toggle="tab"
+                    >История</a
+                  >
+                </li>
+              </ul>
+
+              <div class="tab-content">
+                <div class="tab-pane fade show active" id="details">
+                  <div class="mb-4">
+                    <h5>Описание задачи</h5>
+                    <p>
+                      Необходимо разработать API endpoints для регистрации новых
+                      пользователей, входа в систему и обновления профиля. API
+                      должно поддерживать JWT-аутентификацию и валидацию входных
+                      данных.
+                    </p>
+                    <p>Требования:</p>
+                    <ul>
+                      <li>Регистрация с email и паролем</li>
+                      <li>Вход с email/паролем</li>
+                      <li>Обновление токена</li>
+                      <li>Валидация входных данных</li>
+                      <li>Документирование с помощью Swagger</li>
+                    </ul>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="task-detail-item">
+                        <div class="task-detail-label">Теги</div>
+                        <div>
+                          <span class="tag">API</span>
+                          <span class="tag">Бекенд</span>
+                          <span class="tag">Авторизация</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="task-detail-item">
+                        <div class="task-detail-label">Связанные задачи</div>
+                        <div>
+                          <a href="#" class="d-block text-decoration-none mb-2">
+                            <i class="fas fa-link me-2 text-muted"></i>
+                            <span>Документирование API</span>
+                          </a>
+                          <a href="#" class="d-block text-decoration-none">
+                            <i class="fas fa-link me-2 text-muted"></i>
+                            <span>Фронтенд для авторизации</span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Вкладка комментариев -->
+                <div class="tab-pane fade" id="comments">
+                  <div class="mb-4">
+                    <div class="d-flex mb-3">
+                      <img
+                        src="https://randomuser.me/api/portraits/men/32.jpg"
+                        class="avatar me-3"
+                      />
+                      <div class="flex-grow-1">
+                        <textarea
+                          class="form-control mb-2"
+                          rows="3"
+                          placeholder="Написать комментарий..."
+                        ></textarea>
+                        <div class="d-flex justify-content-between">
+                          <div>
+                            <button
+                              class="btn btn-sm btn-outline-secondary me-2"
+                            >
+                              <i class="fas fa-paperclip"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary">
+                              <i class="far fa-smile"></i>
+                            </button>
+                          </div>
+                          <button class="btn btn-sm btn-primary">
+                            Отправить
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="comment-card p-3 mb-3">
+                      <div class="d-flex justify-content-between mb-2">
+                        <div class="d-flex align-items-center">
+                          <img
+                            src="https://storage.yandexcloud.net/stage01-metronews-transfer/media/20220519/21/14/858x540_a4e5250c_4g0lvtks.jpg"
+                            class="avatar me-2"
+                          />
+                          <div>
+                            <strong>Алеся А.</strong>
+                            <div class="text-muted small">2 часа назад</div>
+                          </div>
+                        </div>
+                        <div>
+                          <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-ellipsis-h"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <p>
+                        Я добавила требования к валидации email и пароля в
+                        описание задачи. Пароль должен содержать минимум 8
+                        символов, включая цифры и специальные символы.
+                      </p>
+                      <div class="d-flex">
+                        <button class="btn btn-sm btn-outline-secondary me-2">
+                          <i class="far fa-thumbs-up me-1"></i> 2
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                          Ответить
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="comment-card p-3 mb-3">
+                      <div class="d-flex justify-content-between mb-2">
+                        <div class="d-flex align-items-center">
+                          <img
+                            src="https://randomuser.me/api/portraits/men/75.jpg"
+                            class="avatar me-2"
+                          />
+                          <div>
+                            <strong>Петр К.</strong>
+                            <div class="text-muted small">Вчера, 15:30</div>
+                          </div>
+                        </div>
+                        <div>
+                          <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-ellipsis-h"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <p>
+                        Для JWT-аутентификации предлагаю использовать библиотеку
+                        django-rest-framework-simplejwt. Она уже интегрирована в
+                        наш проект и хорошо документирована.
+                      </p>
+                      <div class="d-flex">
+                        <button class="btn btn-sm btn-outline-secondary me-2">
+                          <i class="far fa-thumbs-up me-1"></i> 5
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                          Ответить
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Вкладка файлов -->
+                <div class="tab-pane fade" id="files">
+                  <div class="mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                      <button class="btn btn-primary me-3">
+                        <i class="fas fa-upload me-2"></i>Загрузить файл
+                      </button>
+                      <div class="text-muted small">
+                        Максимальный размер: 25MB
+                      </div>
+                    </div>
+
+                    <div class="file-attachment">
+                      <div class="file-icon">
+                        <i class="fas fa-file-pdf"></i>
+                      </div>
+                      <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                          <strong>Требования к API.pdf</strong>
+                          <div class="text-muted small">256 KB</div>
+                        </div>
+                        <div class="text-muted small">
+                          Загружено: Анна С., 12 июня
+                        </div>
+                      </div>
+                      <div>
+                        <button class="btn btn-sm btn-outline-secondary">
+                          <i class="fas fa-download"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="file-attachment">
+                      <div class="file-icon">
+                        <i class="fas fa-file-code"></i>
+                      </div>
+                      <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                          <strong>Пример запроса.json</strong>
+                          <div class="text-muted small">12 KB</div>
+                        </div>
+                        <div class="text-muted small">
+                          Загружено: Петр К., 10 июня
+                        </div>
+                      </div>
+                      <div>
+                        <button class="btn btn-sm btn-outline-secondary">
+                          <i class="fas fa-download"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Вкладка истории -->
+                <div class="tab-pane fade" id="history">
+                  <div class="mb-4">
+                    <ul class="list-unstyled">
+                      <li class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex">
+                          <div class="me-3">
+                            <div
+                              class="bg-light rounded-circle p-2 text-center"
+                              style="width: 40px; height: 40px"
+                            >
+                              <i class="fas fa-user-edit"></i>
+                            </div>
+                          </div>
+                          <div>
+                            <strong>Анна С.</strong> изменила статус на
+                            <span class="badge bg-info">В работе</span>
+                            <div class="text-muted small">Сегодня, 10:15</div>
+                          </div>
+                        </div>
+                      </li>
+                      <li class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex">
+                          <div class="me-3">
+                            <div
+                              class="bg-light rounded-circle p-2 text-center"
+                              style="width: 40px; height: 40px"
+                            >
+                              <i class="fas fa-user-tag"></i>
+                            </div>
+                          </div>
+                          <div>
+                            <strong>Анна С.</strong> назначила задачу на
+                            <strong>Иван П.</strong>
+                            <div class="text-muted small">Вчера, 16:45</div>
+                          </div>
+                        </div>
+                      </li>
+                      <li class="mb-3 pb-2 border-bottom">
+                        <div class="d-flex">
+                          <div class="me-3">
+                            <div
+                              class="bg-light rounded-circle p-2 text-center"
+                              style="width: 40px; height: 40px"
+                            >
+                              <i class="fas fa-plus"></i>
+                            </div>
+                          </div>
+                          <div>
+                            <strong>Анна С.</strong> создала задачу
+                            <div class="text-muted small">15 июня, 09:30</div>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Боковая панель с метаданными -->
+            <div class="col-lg-4">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title mb-4">Информация о задаче</h5>
+
+                  <div class="task-detail-item">
+                    <div class="task-detail-label">Статус</div>
+                    <select class="form-select">
+                      <option>К выполнению</option>
+                      <option selected>В работе</option>
+                      <option>На проверке</option>
+                      <option>Завершено</option>
+                    </select>
+                  </div>
+
+                  <div class="task-detail-item">
+                    <div class="task-detail-label">Приоритет</div>
+                    <select class="form-select">
+                      <option>Низкий</option>
+                      <option selected>Средний</option>
+                      <option>Высокий</option>
+                    </select>
+                  </div>
+
+                  <div class="task-detail-item">
+                    <div class="task-detail-label">Исполнитель</div>
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="https://randomuser.me/api/portraits/men/32.jpg"
+                        class="avatar me-2"
+                      />
+                      <div>
+                        <div>Иван П.</div>
+                        <div class="text-muted small">Backend разработчик</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="task-detail-item">
+                    <div class="task-detail-label">Срок выполнения</div>
+                    <input
+                      type="date"
+                      class="form-control"
+                      value="2023-06-25"
+                    />
+                  </div>
+
+                  <div class="task-detail-item">
+                    <div class="task-detail-label">Прогресс</div>
+                    <div class="d-flex align-items-center">
+                      <div class="progress progress-thin flex-grow-1 me-2">
+                        <div class="progress-bar" style="width: 45%"></div>
+                      </div>
+                      <span>45%</span>
+                    </div>
+                  </div>
+
+                  <div class="task-detail-item">
+                    <div class="task-detail-label">Дата создания</div>
+                    <div>15 июня 2023</div>
+                  </div>
+
+                  <div class="task-detail-item">
+                    <div class="task-detail-label">Последнее обновление</div>
+                    <div>Сегодня, 10:15</div>
+                  </div>
+
+                  <hr class="my-4" />
+
+                  <div class="task-actions d-grid gap-2">
+                    <button class="btn btn-primary">
+                      <i class="far fa-save me-2"></i>Сохранить изменения
+                    </button>
+                    <button class="btn btn-outline-danger">
+                      <i class="far fa-trash-alt me-2"></i>Удалить задачу
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Связанные задачи -->
+      <div class="mt-4">
+        <h5 class="mb-3"><i class="fas fa-link me-2"></i>Связанные задачи</h5>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="task-card p-3">
+              <div class="d-flex justify-content-between mb-2">
+                <h6 class="mb-0">Документирование API</h6>
+                <span class="priority-badge bg-success">Низкий</span>
+              </div>
+              <p class="small text-muted mb-2">
+                Создать Swagger-документацию для новых endpoints
+              </p>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="status-badge bg-secondary">К выполнению</span>
+                <small class="text-muted"
+                  ><i class="far fa-calendar me-1"></i>30 июн</small
+                >
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="task-card p-3">
+              <div class="d-flex justify-content-between mb-2">
+                <h6 class="mb-0">Фронтенд для авторизации</h6>
+                <span class="priority-badge bg-warning">Средний</span>
+              </div>
+              <p class="small text-muted mb-2">
+                Реализовать формы входа и регистрации
+              </p>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="status-badge bg-info">В работе</span>
+                <small class="text-muted"
+                  ><i class="far fa-calendar me-1"></i>28 июн</small
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
