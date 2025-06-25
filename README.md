@@ -49,9 +49,6 @@
 
 а также добавлять новые проекты
 
-![image](https://github.com/user-attachments/assets/2f3424db-52fb-44d5-beec-20921e9f8765)
-
-
 ![image](https://github.com/user-attachments/assets/b504feaa-7234-4096-aee4-fa26bf35fba5)
 
 
