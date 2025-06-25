@@ -56,10 +56,10 @@
 
       .btn-container {
         display: flex;
-        justify-content: space-between; 
+        justify-content: space-between;
         width: 100%;
-        padding: 0 15px; 
-        margin-top: 20px; 
+        padding: 0 15px;
+        margin-top: 20px;
       }
 
       .main-header .container {
@@ -293,8 +293,8 @@
     <header class="main-header">
       <div class="container">
         <div class="auth-buttons">
-          <a href="vxod" class="btn btn-outline">Вход</a>
-          <a href="registr" class="btn btn-outline">Регистрация</a>
+          <a href="{% url 'login' %}" class="btn btn-outline">Вход</a>
+          <a href="{% url 'register' %}" class="btn btn-outline">Регистрация</a>
         </div>
       </div>
     </header>
@@ -307,7 +307,9 @@
             Все инструменты для организации работы вашей команды в одном месте
           </p>
           <div class="cta-buttons">
-            <a href="registr" class="btn btn-primary">Начать бесплатно</a>
+            <a href="{% url 'login' %}" class="btn btn-primary"
+              >Начать бесплатно</a
+            >
           </div>
         </div>
         <div class="hero-image">
@@ -364,7 +366,8 @@
 
           <div class="footer-links">
             <h4>Ресурсы</h4>
-            <a href="https://github.com/alessstft/manager/blob/main/README.md"
+            <a
+              href="https://github.com/alessstft/web-applications-for-project/blob/master/README.md"
               >Описание</a
             >
             <a href="https://github.com/alessstft/manager/wiki">Документация</a>

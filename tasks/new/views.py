@@ -1,6 +1,12 @@
 from django.shortcuts import render
 from .models import Post
- 
+
+def home(request):
+    context = {
+        'posts': Post.objects.all()
+    }
+    return render(request, 'new/home.html', context)
+
 def index(request):
     return render(request, "index.html")
  
@@ -15,9 +21,3 @@ def team(request):
 
 def registr(request):
     return render(request, 'registr.html')
-
-def vxod(request):
-    return render(request, 'vxod.html')
-
-def analit(request):
-    return render(request, 'analit.html')
