@@ -52,6 +52,7 @@
 
 ![image](https://github.com/user-attachments/assets/b504feaa-7234-4096-aee4-fa26bf35fba5)
 
+и редактировать уже созданные 
 
 ![image](https://github.com/user-attachments/assets/9c32e596-33e4-4f5e-a9ce-d45c405e308d)
 
