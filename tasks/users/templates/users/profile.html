@@ -1,16 +1,119 @@
-{% extends "tasks/index.html" %} {% load crispy_forms_tags %} {% block content
-%}
-<div class="content-section">
-  <div class="media">
-    <img
-      class="rounded-circle account-img"
-      src="{{ user.profile.image.url }}"
-    />
-    <div class="media-body">
-      <h2 class="account-heading">{{ user.username }}</h2>
-      <p class="text-secondary">{{ user.email }}</p>
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Профиль{% endblock title %}
+
+{% block content %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} mb-3" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <img
+            src="{{ request.user.profile.image.url }}"
+            class="rounded-circle mb-3 d-block mx-auto"
+            style="width: 120px; height: 120px; object-fit: cover; aspect-ratio: 1 / 1; max-width: none"
+            width="120"
+            height="120"
+            alt=""
+            onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22 viewBox=%220 0 120 120%22><rect width=%22120%22 height=%22120%22 rx=%2260%22 fill=%22%23e5e7eb%22/><path d=%22M60 62c13.3 0 24-10.7 24-24S73.3 14 60 14 36 24.7 36 38s10.7 24 24 24zm0 10c-24.9 0-42 12.5-42 28v6h84v-6c0-15.5-17.1-28-42-28z%22 fill=%22%239ca3af%22/></svg>'"
+          />
+          <h5 class="mb-1">
+            {{ request.user.profile.full_name|default:request.user.username }}
+          </h5>
+          <div class="text-muted">
+            {{ request.user.profile.position|default:"Должность не указана" }}
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body">
+          <h6 class="mb-3">Данные аккаунта</h6>
+          <div class="mb-2">
+            <div class="text-muted small">Email</div>
+            <div>{{ request.user.email|default:"—" }}</div>
+          </div>
+          <div class="mb-2">
+            <div class="text-muted small">Login</div>
+            <div>{{ request.user.username }}</div>
+          </div>
+          <div class="mb-2">
+            <div class="text-muted small">Телефон</div>
+            <div>{{ request.user.profile.phone|default:"—" }}</div>
+          </div>
+          <div class="mb-0">
+            <div class="text-muted small">Дата рождения</div>
+            <div>{{ request.user.profile.birth_date|date:"d.m.Y"|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="mb-3">Редактирование профиля</h5>
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-6">{{ u_form.username|as_crispy_field }}</div>
+              <div class="col-md-6">{{ u_form.email|as_crispy_field }}</div>
+              <div class="col-md-12">{{ p_form.full_name|as_crispy_field }}</div>
+              <div class="col-md-6">{{ p_form.birth_date|as_crispy_field }}</div>
+              <div class="col-md-6">{{ p_form.phone|as_crispy_field }}</div>
+              <div class="col-md-12">{{ p_form.position|as_crispy_field }}</div>
+              <div class="col-md-12">{{ p_form.image|as_crispy_field }}</div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">
+              <i class="far fa-save me-2"></i>Сохранить
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
-  <!-- Здесь будет форма -->
-</div>
 {% endblock content %}
+
+{% block extra_js %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const phone = document.querySelector('input[name="phone"]');
+      if (phone) {
+        phone.addEventListener("input", function () {
+          // Keep only digits, try to format as +7 XXX XXX XX XX
+          let digits = (phone.value || "").replace(/\D/g, "");
+          if (!digits) return;
+          if (digits.startsWith("8") && digits.length >= 11) digits = "7" + digits.slice(1);
+          if (digits.startsWith("7")) digits = digits.slice(1);
+          digits = digits.slice(0, 10);
+
+          let out = "+7";
+          if (digits.length > 0) out += " " + digits.slice(0, 3);
+          if (digits.length > 3) out += " " + digits.slice(3, 6);
+          if (digits.length > 6) out += " " + digits.slice(6, 8);
+          if (digits.length > 8) out += " " + digits.slice(8, 10);
+          phone.value = out;
+        });
+      }
+
+      const birth = document.querySelector('input[name="birth_date"]');
+      if (birth) {
+        birth.addEventListener("input", function () {
+          let v = (birth.value || "").replace(/[^\d]/g, "").slice(0, 8);
+          let out = v;
+          if (v.length > 2) out = v.slice(0, 2) + "." + v.slice(2);
+          if (v.length > 4) out = v.slice(0, 2) + "." + v.slice(2, 4) + "." + v.slice(4);
+          birth.value = out;
+        });
+      }
+    });
+  </script>
+{% endblock extra_js %}
