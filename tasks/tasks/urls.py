@@ -18,7 +18,7 @@ urlpatterns = [
     path('logout/', 
          auth_views.LogoutView.as_view(
              template_name='users/logout.html',
-             extra_context={'csrf_token': '{% csrf_token %}'}
+             next_page='login'
          ), 
          name='logout'),
     path('password-reset', 

@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'new.apps.NewConfig',
 	'users.apps.UsersConfig',
 	'crispy_forms',
+    'crispy_bootstrap5',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -136,12 +137,15 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
     "/var/www/static/"
 ]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = 'index.html'
+LOGIN_REDIRECT_URL = 'projects'
 LOGIN_URL = '/login/'
 
 # Настройки CSRF
