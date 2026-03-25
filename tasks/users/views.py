@@ -1,76 +1,138 @@
-from django.shortcuts import render, redirect
+from functools import wraps
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.shortcuts import redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from .forms import ProfileUpdateForm, UserRegisterForm, UserUpdateForm
+from .forms import (
+    AdminCreateEmployeeForm,
+    FirstAdminRegistrationForm,
+    ProfileUpdateForm,
+    UserUpdateForm,
+)
+from .models import Profile
+
+
+def company_admin_required(view_func):
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(settings.LOGIN_URL)
+        try:
+            if request.user.profile.role != Profile.Role.ADMIN:
+                messages.error(request, 'Эта страница доступна только администратору.')
+                return redirect('projects')
+        except Profile.DoesNotExist:
+            messages.error(request, 'Профиль не найден.')
+            return redirect('profile')
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped
+
 
 @ensure_csrf_cookie
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('projects')
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
-        
         if user is not None:
             login(request, user)
-            return redirect('projects')  # Убедитесь что этот URL существует
-        else:
-            messages.error(request, 'Неверный email или пароль')
-    return render(request, 'users/login.html')
+            next_url = request.GET.get('next') or request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect('projects')
+        messages.error(request, 'Неверный логин или пароль.')
+    return render(
+        request,
+        'users/login.html',
+        {'admin_registered': Profile.has_admin()},
+    )
+
 
 def register(request):
+    if Profile.has_admin():
+        return render(request, 'users/register_closed.html')
+    if request.user.is_authenticated:
+        return redirect('projects')
     if request.method == 'POST':
-        if User.objects.filter(is_superuser=True).exists():
-            form = UserRegisterForm(request.POST)
-            messages.error(
-                request,
-                "Администратор уже создан. Через эту форму можно создать только первого администратора.",
-            )
-            return render(request, 'users/register.html', {'form': form})
-
-        form = UserRegisterForm(request.POST)
+        form = FirstAdminRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.is_staff = True
-            user.is_superuser = True
-            user.save()
-            username = form.cleaned_data.get('username')
+            user = form.save()
+            user.refresh_from_db()
+            profile = user.profile
+            profile.role = Profile.Role.ADMIN
+            profile.save()
             messages.success(
                 request,
-                f'Администратор {username} создан. Теперь можно войти в систему.',
+                'Администратор создан. Войдите с выбранным логином и паролем.',
             )
             return redirect('login')
     else:
-        form = UserRegisterForm()
+        form = FirstAdminRegistrationForm()
     return render(request, 'users/register.html', {'form': form})
 
+
 @login_required
-def profile(request):
-    if request.method == "POST":
+@company_admin_required
+def admin_create_employee(request):
+    if request.method == 'POST':
+        form = AdminCreateEmployeeForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            profile = user.profile
+            profile.role = Profile.Role.EMPLOYEE
+            profile.save()
+            messages.success(
+                request,
+                f'Сотрудник создан. Логин: «{user.username}». '
+                'Передайте пароль сотруднику для входа.',
+            )
+            return redirect('admin_create_employee')
+    else:
+        form = AdminCreateEmployeeForm()
+    return render(
+        request,
+        'users/create_employee.html',
+        {'form': form, 'employees': User.objects.filter(profile__role=Profile.Role.EMPLOYEE)},
+    )
+
+
+@login_required
+def profile_view(request):
+    try:
+        profile = request.user.profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=request.user)
+
+    if request.method == 'POST':
         u_form = UserUpdateForm(request.POST, instance=request.user)
         p_form = ProfileUpdateForm(
-            request.POST, request.FILES, instance=request.user.profile
+            request.POST,
+            request.FILES,
+            instance=profile,
         )
         if u_form.is_valid() and p_form.is_valid():
             u_form.save()
             p_form.save()
-            messages.success(request, "Профиль обновлён")
-            return redirect("profile")
-        messages.error(request, "Проверьте ошибки в форме")
+            messages.success(request, 'Профиль обновлён.')
+            return redirect('profile')
     else:
         u_form = UserUpdateForm(instance=request.user)
-        p_form = ProfileUpdateForm(instance=request.user.profile)
+        p_form = ProfileUpdateForm(instance=profile)
 
     return render(
         request,
-        "users/profile.html",
-        {"u_form": u_form, "p_form": p_form},
+        'users/profile.html',
+        {
+            'u_form': u_form,
+            'p_form': p_form,
+            'profile': profile,
+        },
     )
-
-@login_required
-def projects(request):
-    return render(request, 'projects.html')

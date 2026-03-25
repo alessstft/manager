@@ -32,9 +32,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'new.apps.NewConfig',
-	'users.apps.UsersConfig',
-	'crispy_forms',
-    'crispy_bootstrap5',
+    'users.apps.UsersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,10 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
-
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-CRISPY_TEMPLATE_PACK = "bootstrap5"
-TEMPLATE_DEBUG = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -59,7 +53,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'tasks.urls'
 
-ADMIN_URL = 'admin/'##
+ADMIN_URL = 'admin/'
 
 TEMPLATES = [
     {
@@ -73,7 +67,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.static',  # Add this for static files
+                'django.template.context_processors.static',
+                'users.context_processors.user_roles',
             ],
             'builtins': [  # Optional: auto-load common template tags
                 'django.templatetags.static',
@@ -138,8 +133,11 @@ STATICFILES_DIRS = [
     "/var/www/static/"
 ]
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

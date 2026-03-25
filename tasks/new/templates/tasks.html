@@ -204,18 +204,18 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
 
-            </li class="nav-item">
-            <a class="nav-link" href="index">
-            <i class="fas fa-home-user me-1"></i>Главная</a>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'index' %}">
+                <i class="fas fa-home me-1"></i>Главная</a>
             </li>
 
             <li class="nav-item">
-              <a class="nav-link" href="projects"
-                ><i class="fas fa-r-project"></i> Проекты</a
+              <a class="nav-link" href="{% url 'projects' %}"
+                ><i class="fas fa-project-diagram"></i> Проекты</a
               >
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="tasks"
+              <a class="nav-link active" href="{% url 'tasks' %}"
                 ><i class="fas fa-tasks me-1"></i> Задачи</a
               >
 
@@ -228,21 +228,37 @@
                 role="button"
                 data-bs-toggle="dropdown"
               >
+                {% if user.profile.image %}
                 <img
-                  src="https://storage.yandexcloud.net/stage01-metronews-transfer/media/20220519/21/14/858x540_a4e5250c_4g0lvtks.jpg"
+                  src="{{ user.profile.image.url }}"
+                  alt=""
                   class="avatar me-1"
                 />
-                Алеся А.
+                {% else %}
+                <img
+                  src="https://ui-avatars.com/api/?name={{ user.profile.display_name|urlencode }}&size=64&background=46344e&color=fff"
+                  alt=""
+                  class="avatar me-1"
+                />
+                {% endif %}
+                {{ user.profile.display_name }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li>
-                  <a class="dropdown-item" href="#"
+                  <a class="dropdown-item" href="{% url 'profile' %}"
                     ><i class="fas fa-user me-2"></i>Профиль</a
                   >
                 </li>
+                {% if is_company_admin %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'admin_create_employee' %}"
+                    ><i class="fas fa-user-plus me-2"></i>Новый сотрудник</a
+                  >
+                </li>
+                {% endif %}
                 <li><hr class="dropdown-divider" /></li>
                 <li>
-                  <a class="dropdown-item" href="../../users/templates/users/logout.html"
+                  <a class="dropdown-item" href="{% url 'logout' %}"
                     ><i class="fas fa-sign-out-alt me-2"></i>Выход</a
                   >
                 </li>
@@ -400,7 +416,7 @@
                             class="avatar me-2"
                           />
                           <div>
-                            <strong>Алеся А.</strong>
+                            <strong>{{ user.profile.display_name }}</strong>
                             <div class="text-muted small">2 часа назад</div>
                           </div>
                         </div>

@@ -14,52 +14,110 @@
     />
     <!-- <link rel="stylesheet" href="static\css\auth.css"> -->
     <style>
-      /* Стили для уведомлений */
-      .alert {
+      /* Всплывающие уведомления (правый верхний угол) */
+      .login-toast-stack {
         position: fixed;
-        top: 80px;
+        top: 20px;
         right: 20px;
-        padding: 15px 25px;
-        margin: 10px 0;
-        border: 1px solid transparent;
-        border-radius: 4px;
-        font-family: "Montserrat", sans-serif;
-        font-weight: 500;
-        z-index: 9999;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transform: translateX(120%);
-        transition: transform 0.3s ease-in-out;
-        max-width: 350px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+        max-width: min(380px, calc(100vw - 40px));
+        pointer-events: none;
       }
 
-      .alert.show {
+      .login-toast {
+        pointer-events: auto;
+        padding: 14px 18px 14px 44px;
+        border-radius: 10px;
+        font-family: "Montserrat", sans-serif;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 1.45;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+        border: 1px solid transparent;
+        position: relative;
+        opacity: 0;
+        transform: translateX(calc(100% + 24px));
+        transition:
+          opacity 0.35s ease,
+          transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .login-toast::before {
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 16px;
+      }
+
+      .login-toast--visible {
+        opacity: 1;
         transform: translateX(0);
       }
 
-      .alert-success {
-        color: #155724;
-        background-color: #d4edda;
-        border-color: #c3e6cb;
+      .login-toast--leave {
+        opacity: 0;
+        transform: translateX(calc(100% + 24px));
       }
 
-      .alert-error {
-        color: #721c24;
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
+      .login-toast--error {
+        color: #5c1420;
+        background: linear-gradient(135deg, #ffe8ec 0%, #ffd6dc 100%);
+        border-color: #f1b8c4;
       }
 
-      .alert-warning {
-        color: #856404;
-        background-color: #fff3cd;
-        border-color: #ffeeba;
+      .login-toast--error::before {
+        content: "\f06a";
+        color: #c1121f;
       }
 
-      @media (max-width: 768px) {
-        .alert {
-          top: 70px;
-          left: 20px;
-          right: 20px;
+      .login-toast--success {
+        color: #14532d;
+        background: linear-gradient(135deg, #e8f8ee 0%, #d4f0df 100%);
+        border-color: #a8d9b8;
+      }
+
+      .login-toast--success::before {
+        content: "\f00c";
+        color: #1b7f3a;
+      }
+
+      .login-toast--warning {
+        color: #5c4510;
+        background: linear-gradient(135deg, #fff8e6 0%, #ffefc2 100%);
+        border-color: #e9d28a;
+      }
+
+      .login-toast--warning::before {
+        content: "\f071";
+        color: #b8860b;
+      }
+
+      @media (max-width: 576px) {
+        .login-toast-stack {
+          top: 12px;
+          right: 12px;
+          left: 12px;
           max-width: none;
+          align-items: stretch;
+        }
+
+        .login-toast {
+          transform: translateY(-120%);
+        }
+
+        .login-toast--visible {
+          transform: translateY(0);
+        }
+
+        .login-toast--leave {
+          transform: translateY(-120%);
         }
       }
 
@@ -412,9 +470,8 @@
         <h2>Вход в систему</h2>
         <p class="auth-subtitle">Введите свои учетные данные для доступа</p>
 
-        <!-- Исправленная форма -->
-        <form method="POST" class="auth-form" action="login" id="login-form">
-          {%csrf_token%}
+        <form method="POST" class="auth-form" action="{% url 'login' %}" id="login-form">
+          {% csrf_token %}
 
           <div class="form-group">
             <label for="username">Email или логин</label>
@@ -470,22 +527,80 @@
           </div>
 
           <div class="auth-footer">
-            Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a>
+            {% if not admin_registered %}
+            Первый администратор?
+            <a href="{% url 'register' %}">Создать учётную запись</a>
+            {% else %}
+            Учётную запись выдаёт администратор организации.
+            {% endif %}
           </div>
         </form>
       </div>
     </div>
 
-    <script>
-      document
-        .getElementById("login-form")
-        .addEventListener("submit", function (e) {
-          e.preventDefault();
+    {% if messages %}
+    <div class="login-toast-stack" id="login-toast-stack" aria-live="polite" aria-atomic="false">
+      {% for message in messages %}
+      <div
+        class="login-toast {% if 'error' in message.tags %}login-toast--error{% elif 'success' in message.tags %}login-toast--success{% else %}login-toast--warning{% endif %}"
+        role="alert"
+      >
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
 
-          // Здесь должен быть ваш AJAX-запрос для входа
-          // После успешного ответа:
-          window.location.href = "projects";
+    <script>
+      (function () {
+        var stack = document.getElementById("login-toast-stack");
+        if (!stack) return;
+        var toasts = stack.querySelectorAll(".login-toast");
+        var showDelay = 80;
+        var visibleMs = 5200;
+        var stagger = 120;
+
+        toasts.forEach(function (el, i) {
+          requestAnimationFrame(function () {
+            setTimeout(function () {
+              el.classList.add("login-toast--visible");
+            }, showDelay + i * stagger);
+          });
+          setTimeout(function () {
+            el.classList.remove("login-toast--visible");
+            el.classList.add("login-toast--leave");
+            var removeAfter = function (e) {
+              if (e.propertyName !== "transform" && e.propertyName !== "opacity")
+                return;
+              el.removeEventListener("transitionend", removeAfter);
+              el.remove();
+              if (stack && stack.childElementCount === 0) stack.remove();
+            };
+            el.addEventListener("transitionend", removeAfter);
+            setTimeout(function () {
+              if (el.parentNode) {
+                el.remove();
+                if (stack && stack.childElementCount === 0) stack.remove();
+              }
+            }, 600);
+          }, showDelay + visibleMs + i * stagger);
         });
+      })();
+
+      document.querySelectorAll(".toggle-password").forEach((button) => {
+        button.addEventListener("click", function () {
+          const input = this.parentElement.querySelector("input[type=password], input[type=text]");
+          const icon = this.querySelector("i");
+          if (!input) return;
+          if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace("fa-eye", "fa-eye-slash");
+          } else {
+            input.type = "password";
+            icon.classList.replace("fa-eye-slash", "fa-eye");
+          }
+        });
+      });
     </script>
     <!-- <script>
       document.addEventListener("DOMContentLoaded", function () {

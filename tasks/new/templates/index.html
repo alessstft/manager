@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
   <head>
@@ -294,7 +295,15 @@
       <div class="container">
         <div class="auth-buttons">
           <a href="{% url 'login' %}" class="btn btn-outline">Вход</a>
-          <a href="{% url 'register' %}" class="btn btn-outline">Регистрация</a>
+          {% if not admin_registered %}
+          <a href="{% url 'register' %}" class="btn btn-outline"
+            >Регистрация администратора</a
+          >
+          {% else %}
+          <a href="{% url 'register' %}" class="btn btn-outline"
+            >Регистрация закрыта</a
+          >
+          {% endif %}
         </div>
       </div>
     </header>
@@ -314,7 +323,7 @@
         </div>
         <div class="hero-image">
           <img
-            src="static/images/foto.jpg"
+            src="{% static 'images/foto.svg' %}"
             alt="Управление бизнесом"
             class="img-fluid"
           />
