@@ -1,0 +1,364 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Проекты</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    :root { --primary: #46344e; --secondary: #3f37c9; --accent: #4895ef; }
+    body { background: #f5f7fa; font-family: "Segoe UI", sans-serif; }
+    .navbar { background: var(--primary) !important; }
+    .project-card { border:none; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.06); transition:transform .2s,box-shadow .2s; }
+    .project-card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,.12); }
+    .project-card .card-header { background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff; font-weight:600; border-bottom:none; }
+    .avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #fff; }
+    .progress { height:8px; border-radius:4px; }
+    .progress-bar { background:var(--accent); }
+    .sidebar { background:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.05); padding:20px; }
+    .priority-high { border-left:4px solid #f72585; }
+    .priority-medium { border-left:4px solid #f8961e; }
+    .priority-low { border-left:4px solid #4cc9f0; }
+    .btn-primary { background:var(--primary); border-color:var(--primary); }
+    .btn-primary:hover { background:var(--secondary); border-color:var(--secondary); }
+    .badge-active { background:#198754; }
+    .badge-paused { background:#ffc107; color:#000; }
+    .badge-done { background:#6c757d; }
+    .empty-state { text-align:center; padding:60px 20px; color:#aaa; }
+    .empty-state i { font-size:3rem; margin-bottom:16px; }
+    .card-actions { display:flex; gap:6px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="{% url 'index' %}">
+      <i class="fas fa-project-diagram me-2"></i>И тут мы
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" href="{% url 'index' %}"><i class="fas fa-home me-1"></i>Главная</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{% url 'projects' %}"><i class="fas fa-folder me-1"></i>Проекты</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}"><i class="fas fa-tasks me-1"></i>Задачи</a></li>
+        {% if role != 'worker' %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'team' %}"><i class="fas fa-users me-1"></i>Команда</a></li>
+        {% endif %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <i class="fas fa-user-circle me-1"></i>{{ request.user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Профиль</a></li>
+            <li><hr class="dropdown-divider"/></li>
+            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+  {% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+    {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+
+  <div class="row">
+    <!-- Sidebar filters -->
+    <div class="col-lg-3 mb-4">
+      <div class="sidebar">
+        <h5 class="mb-4"><i class="fas fa-filter me-2"></i>Фильтры</h5>
+        <form method="get">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Статус</label>
+            <select name="status" class="form-select" onchange="this.form.submit()">
+              <option value="">Все проекты</option>
+              <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Активные</option>
+              <option value="paused" {% if status_filter == 'paused' %}selected{% endif %}>На паузе</option>
+              <option value="done" {% if status_filter == 'done' %}selected{% endif %}>Завершённые</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Приоритет</label>
+            <select name="priority" class="form-select" onchange="this.form.submit()">
+              <option value="">Все</option>
+              <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>Высокий</option>
+              <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>Средний</option>
+              <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Низкий</option>
+            </select>
+          </div>
+          {% if status_filter or priority_filter %}
+          <a href="{% url 'projects' %}" class="btn btn-outline-secondary w-100 btn-sm">
+            <i class="fas fa-times me-1"></i>Сбросить
+          </a>
+          {% endif %}
+        </form>
+
+        {% if role != 'worker' %}
+        <hr/>
+        <div class="text-muted small mb-2 fw-semibold">Итого проектов</div>
+        <div class="fs-4 fw-bold text-primary">{{ project_list|length }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="col-lg-9">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+          <i class="fas fa-folder-open me-2"></i>
+          {% if role == 'admin' %}Все проекты
+          {% elif role == 'manager' %}Мои проекты
+          {% else %}Мои проекты{% endif %}
+        </h2>
+        {% if role != 'worker' %}
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+          <i class="fas fa-plus me-2"></i>Новый проект
+        </button>
+        {% endif %}
+      </div>
+
+      {% if project_list %}
+      <div class="row">
+        {% for project in project_list %}
+        <div class="col-md-4 mb-4">
+          <div class="project-card card h-100 priority-{{ project.priority }}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="text-truncate me-2">{{ project.name }}</span>
+              {% if project.status == 'active' %}
+                <span class="badge badge-active">Активный</span>
+              {% elif project.status == 'paused' %}
+                <span class="badge badge-paused">На паузе</span>
+              {% else %}
+                <span class="badge badge-done">Завершён</span>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              <p class="card-text text-muted small mb-3">
+                {{ project.description|truncatechars:80|default:"Описание отсутствует" }}
+              </p>
+              {% if project.end_date %}
+              <p class="small text-muted mb-2">
+                <i class="fas fa-calendar-alt me-1"></i>До {{ project.end_date|date:"d.m.Y" }}
+              </p>
+              {% endif %}
+              <div class="d-flex align-items-center mb-3">
+                <div class="me-auto flex-grow-1">
+                  <small class="text-muted">Прогресс:</small>
+                  <div class="progress mt-1">
+                    <div class="progress-bar" style="width:{{ project.progress }}%"></div>
+                  </div>
+                </div>
+                <small class="text-muted ms-2">{{ project.progress }}%</small>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                  <i class="fas fa-tasks me-1"></i>{{ project.task_count }} задач
+                </small>
+                <small class="text-muted">
+                  <i class="fas fa-user me-1"></i>{{ project.owner.username }}
+                </small>
+              </div>
+            </div>
+            <div class="card-footer bg-transparent">
+              <div class="card-actions">
+                <a href="{% url 'tasks' %}?project={{ project.id }}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                  <i class="fas fa-eye me-1"></i>Открыть
+                </a>
+                {% if role == 'admin' or project.owner == request.user %}
+                <button class="btn btn-sm btn-outline-secondary"
+                  data-bs-toggle="modal" data-bs-target="#editProjectModal{{ project.id }}">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                  data-bs-toggle="modal" data-bs-target="#deleteProjectModal{{ project.id }}">
+                  <i class="fas fa-trash"></i>
+                </button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Modal -->
+        {% if role == 'admin' or project.owner == request.user %}
+        <div class="modal fade" id="editProjectModal{{ project.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header" style="background:var(--primary);color:#fff;">
+                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Редактировать проект</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="post" action="{% url 'edit_project' project.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Название <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" value="{{ project.name }}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Описание</label>
+                    <textarea name="description" class="form-control" rows="3">{{ project.description }}</textarea>
+                  </div>
+                  <div class="row">
+                    <div class="col-6 mb-3">
+                      <label class="form-label fw-semibold">Начало</label>
+                      <input type="date" name="start_date" class="form-control"
+                        value="{% if project.start_date %}{{ project.start_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="col-6 mb-3">
+                      <label class="form-label fw-semibold">Окончание</label>
+                      <input type="date" name="end_date" class="form-control"
+                        value="{% if project.end_date %}{{ project.end_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6 mb-3">
+                      <label class="form-label fw-semibold">Приоритет</label>
+                      <select name="priority" class="form-select">
+                        <option value="low" {% if project.priority == 'low' %}selected{% endif %}>Низкий</option>
+                        <option value="medium" {% if project.priority == 'medium' %}selected{% endif %}>Средний</option>
+                        <option value="high" {% if project.priority == 'high' %}selected{% endif %}>Высокий</option>
+                      </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                      <label class="form-label fw-semibold">Статус</label>
+                      <select name="status" class="form-select">
+                        <option value="active" {% if project.status == 'active' %}selected{% endif %}>Активный</option>
+                        <option value="paused" {% if project.status == 'paused' %}selected{% endif %}>На паузе</option>
+                        <option value="done" {% if project.status == 'done' %}selected{% endif %}>Завершён</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Сохранить</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteProjectModal{{ project.id }}" tabindex="-1">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+              <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-trash me-2"></i>Удалить проект</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                Удалить проект <strong>«{{ project.name }}»</strong>? Все задачи проекта будут отвязаны.
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                <form method="post" action="{% url 'delete_project' project.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash me-1"></i>Удалить
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-folder-open text-muted"></i>
+        <h5 class="text-muted">Проектов пока нет</h5>
+        {% if role != 'worker' %}
+        <p class="text-muted">Создайте первый проект, нажав кнопку выше.</p>
+        {% else %}
+        <p class="text-muted">Вас ещё не добавили ни в один проект.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- New Project Modal -->
+{% if role != 'worker' %}
+<div class="modal fade" id="newProjectModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background:var(--primary);color:#fff;">
+        <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Новый проект</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'create_project' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Название <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="Название проекта" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Описание</label>
+            <textarea name="description" class="form-control" rows="3" placeholder="Описание проекта"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-6 mb-3">
+              <label class="form-label fw-semibold">Дата начала</label>
+              <input type="date" name="start_date" class="form-control">
+            </div>
+            <div class="col-6 mb-3">
+              <label class="form-label fw-semibold">Дата окончания</label>
+              <input type="date" name="end_date" class="form-control">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6 mb-3">
+              <label class="form-label fw-semibold">Приоритет</label>
+              <select name="priority" class="form-select">
+                <option value="low">Низкий</option>
+                <option value="medium" selected>Средний</option>
+                <option value="high">Высокий</option>
+              </select>
+            </div>
+            <div class="col-6 mb-3">
+              <label class="form-label fw-semibold">Статус</label>
+              <select name="status" class="form-select">
+                <option value="active" selected>Активный</option>
+                <option value="paused">На паузе</option>
+                <option value="done">Завершён</option>
+              </select>
+            </div>
+          </div>
+          {% if form.fields.members.queryset %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Участники</label>
+            <select name="members" class="form-select" multiple size="4">
+              {% for user in form.fields.members.queryset %}
+              <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Зажмите Ctrl для выбора нескольких</div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Создать</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
