@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ task.title }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    :root { --primary: #46344e; --accent: #d2632b; }
+    body { background: #f5f7fa; font-family: "Segoe UI", sans-serif; }
+    .navbar { background: var(--primary) !important; }
+
+    /* шапка задачи */
+    .task-header {
+      background: linear-gradient(135deg, var(--primary), #9b786f);
+      color: #fff; border-radius: 10px 10px 0 0; padding: 20px 24px;
+    }
+    .task-container { background:#fff; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.08); }
+
+    /* вкладки */
+    .task-tabs .nav-link { color:#495057; font-weight:500; border:none; padding:10px 20px; }
+    .task-tabs .nav-link.active { color:var(--primary); border-bottom:2px solid var(--primary); background:transparent; }
+
+    /* прогресс-кружок */
+    .prog-circle { position:relative; width:80px; height:80px; flex-shrink:0; }
+    .prog-circle svg { transform:rotate(-90deg); }
+    .prog-bg   { fill:none; stroke:rgba(255,255,255,.3); stroke-width:7; }
+    .prog-fill { fill:none; stroke:#fff; stroke-width:7; stroke-linecap:round; transition:stroke-dashoffset .4s; }
+    .prog-circle-side .prog-bg   { stroke:#e9ecef; }
+    .prog-circle-side .prog-fill { stroke:var(--accent); }
+    .prog-text {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      font-size:.9rem; font-weight:700; color:#fff;
+    }
+    .prog-text-side { color:var(--primary); }
+
+    /* правая панель */
+    .task-detail-label { font-weight:600; color:#6c757d; margin-bottom:4px; font-size:.85rem; }
+    .task-detail-item  { margin-bottom:14px; }
+    .disabled-field { background:#f8f9fa !important; cursor:not-allowed !important; opacity:.7; }
+    .access-notice {
+      background:#fff8e1; border:1px solid #ffe082; border-radius:8px;
+      padding:10px 14px; font-size:.85rem; color:#795548;
+      margin-bottom:14px; display:flex; align-items:center; gap:8px;
+    }
+
+    /* файлы */
+    .file-row { display:flex; align-items:center; padding:10px; border:1px solid #dee2e6; border-radius:6px; margin-bottom:8px; }
+    .file-icon { font-size:1.4rem; margin-right:10px; color:#6c757d; }
+
+    /* комментарии */
+    .comment-card { border-left:3px solid var(--accent); border-radius:6px; background:#fafafa; }
+
+    /* история */
+    .hist-item { display:flex; gap:12px; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid #f0f0f0; }
+    .hist-icon {
+      width:36px; height:36px; border-radius:50%; background:#f0edf3;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--primary); flex-shrink:0; font-size:.85rem;
+    }
+    .hist-icon.icon-plus       { background:#d4edda; color:#155724; }
+    .hist-icon.icon-save       { background:#cce5ff; color:#004085; }
+    .hist-icon.icon-trash-alt  { background:#f8d7da; color:#721c24; }
+    .hist-icon.icon-comment    { background:#fff3cd; color:#856404; }
+    .hist-icon.icon-paperclip  { background:#d1ecf1; color:#0c5460; }
+    .hist-icon.icon-chart-line { background:#d4edda; color:#155724; }
+    .hist-icon.icon-link       { background:#e2d9f3; color:#4a235a; }
+    .hist-icon.icon-unlink     { background:#f8d7da; color:#721c24; }
+    .hist-icon.icon-edit       { background:#f0edf3; color:var(--primary); }
+
+    /* значки статус/приоритет */
+    .bs-todo       { background:#6c757d; }
+    .bs-in_progress{ background:#0dcaf0; color:#000; }
+    .bs-review     { background:#ffc107; color:#000; }
+    .bs-done       { background:#198754; }
+    .bp-low        { background:#198754; }
+    .bp-medium     { background:#ffc107; color:#000; }
+    .bp-high       { background:#dc3545; }
+
+    /* связанные */
+    .related-card { border-left:4px solid var(--accent); border-radius:8px; padding:12px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; }
+
+    /* range slider */
+    .progress-thin { height:6px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'index' %}"><i class="fas fa-project-diagram me-2"></i>И тут мы</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="{% url 'index' %}"><i class="fas fa-home me-1"></i>Главная</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'projects' %}"><i class="fas fa-project-diagram me-1"></i>Проекты</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{% url 'tasks' %}"><i class="fas fa-tasks me-1"></i>Задачи</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode }}&size=64&background=46344e&color=fff" class="avatar me-1"/>
+            {{ user.get_full_name|default:user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Профиль</a></li>
+            <li><hr class="dropdown-divider"/></li>
+            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+
+  {% for m in messages %}
+  <div class="alert alert-{{ m.tags }} alert-dismissible fade show">
+    {{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+
+  <!-- breadcrumb -->
+  <div class="d-flex align-items-center mb-3">
+    <a href="{% url 'tasks' %}" class="btn btn-outline-secondary btn-sm me-3">
+      <i class="fas fa-arrow-left me-1"></i>Назад
+    </a>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'projects' %}">Проекты</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'tasks' %}?project={{ task.project.id }}">{{ task.project.name }}</a></li>
+        <li class="breadcrumb-item active">{{ task.title }}</li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="task-container">
+
+    <!-- ── ШАПКА с прогресс-кружком ── -->
+    <div class="task-header d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-1 text-white">{{ task.title }}</h4>
+        <p class="mb-0 text-white-50 small">Проект: {{ task.project.name }}</p>
+        <p class="mb-0 text-white-50 small">
+          Опубликовано: {{ task.created_at|date:"d M Y, H:i" }}
+          {% if task.created_by %} · {{ task.created_by.get_full_name|default:task.created_by.username }}{% endif %}
+        </p>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <!-- кружок прогресса в шапке -->
+        <div class="prog-circle" title="Прогресс: {{ task.progress }}%">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle class="prog-bg"   cx="40" cy="40" r="33"/>
+            <circle class="prog-fill" cx="40" cy="40" r="33"
+              stroke-dasharray="207.3"
+              stroke-dashoffset="{{ task.progress|floatformat:0|default:0 }}"/>
+          </svg>
+          <div class="prog-text">{{ task.progress }}%</div>
+        </div>
+        <span class="badge rounded-pill bs-{{ task.status }} fs-6">
+          {{ task.get_status_display }}
+        </span>
+      </div>
+    </div>
+
+    <div class="p-4">
+      <div class="row">
+
+        <!-- ══════════ ЛЕВАЯ КОЛОНКА: вкладки ══════════ -->
+        <div class="col-lg-8">
+          <ul class="nav task-tabs mb-4">
+            <li class="nav-item">
+              <a class="nav-link active" href="#details" data-bs-toggle="tab">Детали</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#comments" data-bs-toggle="tab">
+                Комментарии <span class="badge bg-secondary">{{ comments|length }}</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#history" data-bs-toggle="tab">
+                История <span class="badge bg-secondary">{{ history|length }}</span>
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+
+            <!-- ── ДЕТАЛИ ── -->
+            <div class="tab-pane fade show active" id="details">
+              <h6 class="fw-bold mb-2">Описание</h6>
+              <p class="text-muted">{{ task.description|linebreaksbr|default:"Описание не указано." }}</p>
+              <hr/>
+
+              <!-- Файлы -->
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="fw-bold mb-0">
+                    <i class="fas fa-paperclip me-2 text-muted"></i>Файлы
+                    <span class="badge bg-secondary">{{ files|length }}</span>
+                  </h6>
+                  {% if is_admin %}
+                  <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <i class="fas fa-upload me-1"></i>Загрузить
+                  </button>
+                  {% endif %}
+                </div>
+                {% if files %}
+                  {% for f in files %}
+                  <div class="file-row">
+                    <div class="file-icon"><i class="fas {{ f.icon_class }}"></i></div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between">
+                        <strong>{{ f.original_name }}</strong>
+                        <small class="text-muted">{{ f.size_display }}</small>
+                      </div>
+                      <small class="text-muted">
+                        {{ f.uploaded_by.get_full_name|default:f.uploaded_by.username }},
+                        {{ f.uploaded_at|date:"d M Y, H:i" }}
+                      </small>
+                    </div>
+                    <div class="ms-3 d-flex gap-1">
+                      <a href="{% url 'download_file' f.id %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-download"></i>
+                      </a>
+                      {% if is_admin %}
+                      <form method="post">{% csrf_token %}
+                        <input type="hidden" name="action" value="delete_file"/>
+                        <input type="hidden" name="file_id" value="{{ f.id }}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                          onclick="return confirm('Удалить файл «{{ f.original_name }}»?')">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="text-muted small">Файлов пока нет.</p>
+                {% endif %}
+              </div>
+
+              <hr/>
+
+              <!-- Связанные задачи -->
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="fw-bold mb-0">
+                    <i class="fas fa-link me-2 text-muted"></i>Связанные задачи
+                  </h6>
+                  {% if is_admin and other_tasks %}
+                  <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#relatedModal">
+                    <i class="fas fa-plus me-1"></i>Добавить
+                  </button>
+                  {% endif %}
+                </div>
+                {% if related_tasks %}
+                  {% for rt in related_tasks %}
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <a href="{% url 'task_detail' rt.related.id %}" class="text-decoration-none me-2">
+                      <i class="fas fa-link me-2 text-muted"></i>{{ rt.related.title }}
+                      <span class="badge ms-1 bs-{{ rt.related.status }} small">{{ rt.related.get_status_display }}</span>
+                    </a>
+                    {% if is_admin %}
+                    <form method="post" class="d-inline">{% csrf_token %}
+                      <input type="hidden" name="action" value="remove_related"/>
+                      <input type="hidden" name="related_id" value="{{ rt.related.id }}"/>
+                      <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1"
+                        onclick="return confirm('Убрать связь с «{{ rt.related.title }}»?')">
+                        <i class="fas fa-times fa-sm"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="text-muted small">Связанных задач нет.</p>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- ── КОММЕНТАРИИ ── -->
+            <div class="tab-pane fade" id="comments">
+              <form method="post" class="mb-4">{% csrf_token %}
+                <input type="hidden" name="action" value="comment"/>
+                <div class="d-flex">
+                  <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode }}&size=64&background=46344e&color=fff"
+                       class="avatar me-3 mt-1"/>
+                  <div class="flex-grow-1">
+                    <textarea name="content" class="form-control mb-2" rows="3"
+                      placeholder="Написать комментарий..." required></textarea>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                      <i class="fas fa-paper-plane me-1"></i>Отправить
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {% for c in comments %}
+              <div class="comment-card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="https://ui-avatars.com/api/?name={{ c.author.get_full_name|urlencode }}&size=32&background=46344e&color=fff"
+                         class="avatar"/>
+                    <strong>{{ c.author.get_full_name|default:c.author.username }}</strong>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted">{{ c.created_at|date:"d M Y, H:i" }}</small>
+                    {% if is_admin or c.author == request.user %}
+                    <form method="post" class="d-inline">{% csrf_token %}
+                      <input type="hidden" name="action" value="delete_comment"/>
+                      <input type="hidden" name="comment_id" value="{{ c.id }}"/>
+                      <button type="submit" class="btn btn-link btn-sm text-danger p-0"
+                        onclick="return confirm('Удалить этот комментарий?')" title="Удалить">
+                        <i class="fas fa-times fa-sm"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </div>
+                <p class="mb-0 ms-4 ps-2">{{ c.content|linebreaksbr }}</p>
+              </div>
+              {% empty %}
+              <p class="text-muted">Комментариев пока нет.</p>
+              {% endfor %}
+            </div>
+
+            <!-- ── ИСТОРИЯ ── -->
+            <div class="tab-pane fade" id="history">
+              {% for h in history %}
+              <div class="hist-item">
+                <div class="hist-icon icon-{{ h.icon }}">
+                  <i class="fas fa-{{ h.icon }}"></i>
+                </div>
+                <div>
+                  <strong>{{ h.user.get_full_name|default:h.user.username }}</strong>
+                  {{ h.action }}
+                  <div class="text-muted small">{{ h.created_at|date:"d M Y, H:i" }}</div>
+                </div>
+              </div>
+              {% empty %}
+              <p class="text-muted">История пуста.</p>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══════════ ПРАВАЯ КОЛОНКА: информация ══════════ -->
+        <div class="col-lg-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <h6 class="card-title fw-bold mb-3">Информация о задаче</h6>
+
+              {% if not is_admin %}
+              <div class="access-notice">
+                <i class="fas fa-info-circle"></i>
+                Вы можете обновить только прогресс выполнения.
+              </div>
+              {% endif %}
+
+              <!-- ── ФОРМА ДЛЯ АДМИНИСТРАТОРА ── -->
+              {% if is_admin %}
+              <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="update"/>
+
+                <div class="task-detail-item">
+                  <div class="task-detail-label">Название</div>
+                  <input type="text" name="title" class="form-control form-control-sm"
+                    value="{{ task.title }}"/>
+                </div>
+
+                <div class="task-detail-item">
+                  <div class="task-detail-label">Статус</div>
+                  <select name="status" class="form-select form-select-sm">
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if task.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="task-detail-item">
+                  <div class="task-detail-label">Приоритет</div>
+                  <select name="priority" class="form-select form-select-sm">
+                    {% for val, label in priority_choices %}
+                    <option value="{{ val }}" {% if task.priority == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="task-detail-item">
+                  <div class="task-detail-label">Исполнитель</div>
+                  <select name="assigned_to" class="form-select form-select-sm">
+                    <option value="">— не назначен —</option>
+                    {% for u in all_users %}
+                    <option value="{{ u.id }}" {% if task.assigned_to.id == u.id %}selected{% endif %}>
+                      {{ u.get_full_name|default:u.username }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="task-detail-item">
+                  <div class="task-detail-label">Срок выполнения</div>
+                  <input type="date" name="due_date" class="form-control form-control-sm"
+                    value="{{ task.due_date|date:'Y-m-d'|default:'' }}"/>
+                </div>
+
+                <div class="task-detail-item">
+                  <div class="task-detail-label">
+                    Прогресс: <span id="prog-val-admin">{{ task.progress }}</span>%
+                  </div>
+                  <input type="range" name="progress" class="form-range" min="0" max="100"
+                    value="{{ task.progress }}"
+                    oninput="syncProgress(this.value, 'admin')"/>
+                  <div class="progress progress-thin mt-1">
+                    <div class="progress-bar bg-warning" id="prog-bar-admin"
+                      style="width:{{ task.progress }}%"></div>
+                  </div>
+                </div>
+
+                <div class="task-detail-item">
+                  <div class="task-detail-label">Дата создания</div>
+                  <div class="small">{{ task.created_at|date:"d M Y, H:i" }}</div>
+                </div>
+                <div class="task-detail-item">
+                  <div class="task-detail-label">Последнее обновление</div>
+                  <div class="small">{{ task.updated_at|date:"d M Y, H:i" }}</div>
+                </div>
+
+                <hr/>
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-primary btn-sm rounded-pill">
+                    <i class="far fa-save me-2"></i>Сохранить все изменения
+                  </button>
+                </div>
+              </form>
+
+              <form method="post" class="mt-2">{% csrf_token %}
+                <input type="hidden" name="action" value="delete"/>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill"
+                    onclick="return confirm('Удалить задачу «{{ task.title }}»? Это действие необратимо.')">
+                    <i class="far fa-trash-alt me-2"></i>Удалить задачу
+                  </button>
+                </div>
+              </form>
+
+              {% else %}
+              <!-- ── ФОРМА ДЛЯ ОБЫЧНОГО ПОЛЬЗОВАТЕЛЯ — только прогресс ── -->
+
+              <!-- Поля только для просмотра -->
+              <div class="task-detail-item">
+                <div class="task-detail-label">Название</div>
+                <input type="text" class="form-control form-control-sm disabled-field"
+                  value="{{ task.title }}" readonly/>
+              </div>
+              <div class="task-detail-item">
+                <div class="task-detail-label">Проект</div>
+                <input type="text" class="form-control form-control-sm disabled-field"
+                  value="{{ task.project.name }}" readonly/>
+              </div>
+              <div class="task-detail-item">
+                <div class="task-detail-label">Исполнитель</div>
+                <input type="text" class="form-control form-control-sm disabled-field"
+                  value="{{ task.assigned_to.get_full_name|default:task.assigned_to.username|default:'—' }}" readonly/>
+              </div>
+              <div class="task-detail-item">
+                <div class="task-detail-label">Статус</div>
+                <input type="text" class="form-control form-control-sm disabled-field"
+                  value="{{ task.get_status_display }}" readonly/>
+              </div>
+              <div class="task-detail-item">
+                <div class="task-detail-label">Приоритет</div>
+                <input type="text" class="form-control form-control-sm disabled-field"
+                  value="{{ task.get_priority_display }}" readonly/>
+              </div>
+              <div class="task-detail-item">
+                <div class="task-detail-label">Срок выполнения</div>
+                <input type="text" class="form-control form-control-sm disabled-field"
+                  value="{{ task.due_date|date:'d.m.Y'|default:'—' }}" readonly/>
+              </div>
+
+              <hr/>
+
+              <!-- Прогресс — единственное что может менять пользователь -->
+              <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="progress"/>
+                <div class="task-detail-item">
+                  <div class="task-detail-label">
+                    Прогресс выполнения: <span id="prog-val-emp">{{ task.progress }}</span>%
+                  </div>
+                  <!-- кружок -->
+                  <div class="d-flex justify-content-center mb-2">
+                    <div class="prog-circle prog-circle-side" style="width:80px;height:80px;">
+                      <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle class="prog-bg"   cx="40" cy="40" r="33"/>
+                        <circle class="prog-fill" id="prog-circle-emp" cx="40" cy="40" r="33"
+                          stroke-dasharray="207.3"
+                          stroke-dashoffset="{{ task.progress|floatformat:0|default:0 }}"/>
+                      </svg>
+                      <div class="prog-text prog-text-side">
+                        <span id="prog-circle-text">{{ task.progress }}</span>%
+                      </div>
+                    </div>
+                  </div>
+                  <input type="range" name="progress" class="form-range" min="0" max="100"
+                    value="{{ task.progress }}"
+                    oninput="syncProgress(this.value, 'emp')"/>
+                  <div class="progress progress-thin mt-1">
+                    <div class="progress-bar" id="prog-bar-emp" style="background:var(--accent);width:{{ task.progress }}%"></div>
+                  </div>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-sm rounded-pill"
+                    style="background:var(--accent);color:#fff;">
+                    <i class="fas fa-chart-line me-2"></i>Сохранить прогресс
+                  </button>
+                </div>
+              </form>
+              {% endif %}
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Связанные задачи — карточки внизу -->
+  {% if related_tasks %}
+  <div class="mt-4">
+    <h5 class="mb-3"><i class="fas fa-link me-2"></i>Связанные задачи</h5>
+    <div class="row">
+      {% for rt in related_tasks %}
+      <div class="col-md-4 mb-3">
+        <div class="related-card">
+          <div class="d-flex justify-content-between mb-2">
+            <h6 class="mb-0">
+              <a href="{% url 'task_detail' rt.related.id %}" class="text-decoration-none text-dark">
+                {{ rt.related.title }}
+              </a>
+            </h6>
+            <span class="badge bp-{{ rt.related.priority }}">{{ rt.related.get_priority_display }}</span>
+          </div>
+          <p class="small text-muted mb-2">{{ rt.related.description|truncatechars:70|default:"—" }}</p>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bs-{{ rt.related.status }}">{{ rt.related.get_status_display }}</span>
+            {% if rt.related.due_date %}
+            <small class="text-muted"><i class="far fa-calendar me-1"></i>{{ rt.related.due_date|date:"d M" }}</small>
+            {% endif %}
+          </div>
+          {% if rt.related.progress > 0 %}
+          <div class="progress progress-thin mt-2">
+            <div class="progress-bar" style="background:var(--accent);width:{{ rt.related.progress }}%"></div>
+          </div>
+          <small class="text-muted">{{ rt.related.progress }}%</small>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Modal: загрузить файл -->
+{% if is_admin %}
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-upload me-2"></i>Загрузить файл</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" enctype="multipart/form-data">{% csrf_token %}
+        <input type="hidden" name="action" value="upload"/>
+        <div class="modal-body">
+          <label class="form-label fw-bold">Выберите файл (макс. 25 МБ)</label>
+          <input type="file" name="file" class="form-control" required/>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary">Загрузить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal: добавить связанную задачу -->
+{% if is_admin and other_tasks %}
+<div class="modal fade" id="relatedModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-link me-2"></i>Добавить связанную задачу
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="add_related"/>
+        <div class="modal-body">
+          <select name="related_task_id" class="form-select" required>
+            <option value="">— выберите задачу —</option>
+            {% for task in other_tasks %}   <!-- ← переименовали в task -->
+              <option value="{{ task.id }}">
+                {{ task.title }} ({{ task.get_status_display }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary">Добавить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const CIRC = 207.3;
+
+  function syncProgress(val, who) {
+    val = parseInt(val);
+    const offset = CIRC - (val / 100) * CIRC;
+
+    if (who === 'admin') {
+      const v = document.getElementById('prog-val-admin');
+      const b = document.getElementById('prog-bar-admin');
+      if (v) v.textContent = val;
+      if (b) b.style.width = val + '%';
+    } else {
+      const v   = document.getElementById('prog-val-emp');
+      const b   = document.getElementById('prog-bar-emp');
+      const c   = document.getElementById('prog-circle-emp');
+      const ct  = document.getElementById('prog-circle-text');
+      if (v)  v.textContent  = val;
+      if (b)  b.style.width  = val + '%';
+      if (c)  c.style.strokeDashoffset = offset;
+      if (ct) ct.textContent = val;
+    }
+  }
+
+  (function initHeaderCircle() {
+    const progress = {{ task.progress }};
+    const offset   = CIRC - (progress / 100) * CIRC;
+    const el = document.querySelector('.task-header .prog-fill');
+    if (el) el.style.strokeDashoffset = offset;
+  })();
+</script>
+</body>
+</html>
