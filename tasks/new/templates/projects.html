@@ -4,347 +4,751 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Управление проектами</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <title>Проекты — Maager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
+      /* ─── DESIGN TOKENS ─────────────────────────────────────── */
       :root {
-        --primary-color: #46344e;
-        --secondary-color: #3f37c9;
-        --accent-color: #4895ef;
-        --dark-color: #212529;
-        --danger-color: #f72585;
-        --warning-color: #f8961e;
+        --primary:        #5b3d8c;
+        --primary-dark:   #3e2665;
+        --primary-light:  #7c5ab8;
+        --primary-faint:  rgba(91,61,140,.08);
+        --accent:         #f5a623;
+        --danger:         #ef4444;
+        --danger-faint:   rgba(239,68,68,.1);
+        --warning:        #f59e0b;
+        --warning-faint:  rgba(245,158,11,.12);
+        --success:        #22c55e;
+        --success-faint:  rgba(34,197,94,.1);
+        --bg:             #f7f6fb;
+        --surface:        #ffffff;
+        --text-primary:   #1a1329;
+        --text-secondary: #5a5470;
+        --text-muted:     #9b95b0;
+        --border:         #e4dfef;
+        --shadow-sm:      0 1px 3px rgba(91,61,140,.08);
+        --shadow-md:      0 4px 16px rgba(91,61,140,.12);
+        --shadow-lg:      0 12px 40px rgba(91,61,140,.18);
+        --radius:         12px;
+        --radius-sm:      8px;
+        --radius-lg:      16px;
+        --transition:     0.22s cubic-bezier(.4,0,.2,1);
+        --header-h:       64px;
       }
-      body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; color: var(--dark-color); }
-      .navbar-brand { font-weight: 700; font-size: 1.5rem; }
-      .project-card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.3s ease, box-shadow 0.3s ease; overflow: hidden; }
-      .project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-      .project-card .card-header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; font-weight: 600; border-bottom: none; }
-      .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); }
-      .btn-primary:hover { background-color: var(--secondary-color); border-color: var(--secondary-color); }
-      .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-      .progress { height: 8px; border-radius: 4px; }
-      .progress-bar { background-color: var(--accent-color); }
-      .sidebar { background-color: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 20px; height: 100%; }
-      .empty-state { text-align: center; padding: 60px 20px; color: #6c757d; }
-      .empty-state i { font-size: 4rem; margin-bottom: 20px; opacity: 0.3; }
-      .card-actions { display: flex; gap: 6px; }
+
+      *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+      html { scroll-behavior:smooth; }
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text-primary);
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+      }
+
+      /* ─── HEADER ─────────────────────────────────────────────── */
+      .main-header {
+        position: fixed; top:0; left:0; right:0; z-index:1000;
+        height: var(--header-h);
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--border);
+      }
+      .header-inner {
+        max-width: 1280px; margin:0 auto; padding:0 24px;
+        height:100%; display:flex; align-items:center; justify-content:space-between; gap:24px;
+      }
+      .logo {
+        font-size:1.15rem; font-weight:800; color:var(--primary);
+        text-decoration:none; display:flex; align-items:center; gap:8px; letter-spacing:-.3px;
+        flex-shrink:0;
+      }
+      .logo i { color:var(--accent); font-size:1rem; }
+
+      .main-nav { display:flex; gap:2px; }
+      .main-nav a {
+        text-decoration:none; color:var(--text-secondary); font-weight:500; font-size:.875rem;
+        padding:7px 13px; border-radius:var(--radius-sm);
+        transition: color var(--transition), background var(--transition);
+        display:flex; align-items:center; gap:6px;
+      }
+      .main-nav a:hover { color:var(--primary); background:var(--primary-faint); }
+      .main-nav a.active { color:var(--primary); background:var(--primary-faint); font-weight:600; }
+
+      .header-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+
+      /* ─── USER DROPDOWN ──────────────────────────────────────── */
+      .user-menu { position:relative; }
+      .user-trigger {
+        display:flex; align-items:center; gap:8px;
+        padding:5px 12px 5px 5px;
+        border-radius:100px; border:1.5px solid var(--border);
+        background:var(--surface); cursor:pointer;
+        font-size:.875rem; font-weight:500; color:var(--text-primary);
+        transition: border-color var(--transition), box-shadow var(--transition);
+      }
+      .user-trigger:hover { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-faint); }
+      .user-avatar {
+        width:30px; height:30px; border-radius:50%; object-fit:cover;
+        border:2px solid var(--border);
+      }
+      .user-trigger i.chevron { font-size:.65rem; color:var(--text-muted); margin-left:2px; }
+
+      .dropdown-menu {
+        position:absolute; top:calc(100% + 8px); right:0;
+        background:var(--surface); border:1px solid var(--border);
+        border-radius:var(--radius); box-shadow:var(--shadow-lg);
+        min-width:200px; padding:6px; z-index:999;
+        display:none;
+        animation: fadeIn .15s ease;
+      }
+      @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+      .user-menu.open .dropdown-menu { display:block; }
+
+      .dropdown-item {
+        display:flex; align-items:center; gap:10px;
+        padding:9px 12px; border-radius:var(--radius-sm);
+        font-size:.875rem; color:var(--text-primary); text-decoration:none;
+        cursor:pointer; border:none; background:none; width:100%; text-align:left;
+        transition: background var(--transition), color var(--transition);
+      }
+      .dropdown-item:hover { background:var(--primary-faint); color:var(--primary); }
+      .dropdown-item i { width:14px; color:var(--text-muted); }
+      .dropdown-divider { height:1px; background:var(--border); margin:6px 0; }
+      .dropdown-item.danger { color:var(--danger); }
+      .dropdown-item.danger:hover { background:var(--danger-faint); }
+      .dropdown-item.danger i { color:var(--danger); }
+
+      /* ─── PAGE LAYOUT ─────────────────────────────────────────── */
+      .page-wrap {
+        max-width:1280px; margin:0 auto; padding:calc(var(--header-h) + 32px) 24px 48px;
+        display:grid; grid-template-columns:260px 1fr; gap:24px;
+        align-items:start;
+      }
+
+      /* ─── SIDEBAR ─────────────────────────────────────────────── */
+      .sidebar {
+        background:var(--surface); border:1px solid var(--border);
+        border-radius:var(--radius-lg); padding:20px;
+        position:sticky; top:calc(var(--header-h) + 16px);
+      }
+      .sidebar-title {
+        font-size:.7rem; font-weight:700; letter-spacing:1.2px;
+        text-transform:uppercase; color:var(--text-muted); margin-bottom:16px;
+      }
+      .filter-group { margin-bottom:20px; }
+      .filter-label {
+        font-size:.8rem; font-weight:600; color:var(--text-secondary);
+        margin-bottom:10px; display:block;
+      }
+
+      .priority-option {
+        display:flex; align-items:center; gap:8px;
+        padding:7px 10px; border-radius:var(--radius-sm); cursor:pointer;
+        margin-bottom:4px;
+        transition: background var(--transition);
+        user-select:none;
+      }
+      .priority-option:hover { background:var(--bg); }
+      .priority-option input[type="checkbox"] { display:none; }
+      .priority-dot {
+        width:10px; height:10px; border-radius:50%; flex-shrink:0;
+        transition: transform var(--transition);
+      }
+      .priority-option input:checked ~ .p-label { font-weight:600; }
+      .p-check {
+        width:16px; height:16px; border-radius:4px; border:1.5px solid var(--border);
+        display:flex; align-items:center; justify-content:center;
+        flex-shrink:0; transition:all var(--transition); background:var(--surface);
+      }
+      .priority-option input:checked + .p-check {
+        background:var(--primary); border-color:var(--primary);
+      }
+      .priority-option input:checked + .p-check::after {
+        content:''; width:5px; height:9px;
+        border:2px solid #fff; border-top:none; border-left:none;
+        transform:rotate(45deg) translate(-1px,-1px); display:block;
+      }
+      .p-label { font-size:.875rem; color:var(--text-primary); }
+      .dot-high { background:var(--danger); }
+      .dot-medium { background:var(--warning); }
+      .dot-low { background:var(--success); }
+
+      .date-group { display:flex; flex-direction:column; gap:6px; }
+      .date-field {
+        display:flex; flex-direction:column; gap:3px;
+      }
+      .date-field span { font-size:.75rem; color:var(--text-muted); }
+      .date-input {
+        padding:8px 10px; border:1.5px solid var(--border);
+        border-radius:var(--radius-sm); font-family:inherit; font-size:.875rem;
+        color:var(--text-primary); background:var(--bg);
+        transition: border-color var(--transition), box-shadow var(--transition);
+        outline:none;
+      }
+      .date-input:focus {
+        border-color:var(--primary);
+        box-shadow:0 0 0 3px var(--primary-faint);
+        background:var(--surface);
+      }
+
+      .sidebar-divider { height:1px; background:var(--border); margin:16px 0; }
+
+      /* ─── BUTTONS ─────────────────────────────────────────────── */
+      .btn {
+        display:inline-flex; align-items:center; justify-content:center; gap:6px;
+        padding:9px 18px; border-radius:var(--radius-sm); font-family:inherit;
+        font-size:.875rem; font-weight:600; line-height:1.2;
+        cursor:pointer; border:none; text-decoration:none; white-space:nowrap;
+        transition: all var(--transition);
+      }
+      .btn-primary {
+        background:var(--primary); color:#fff;
+        box-shadow:0 2px 8px rgba(91,61,140,.3);
+      }
+      .btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); box-shadow:0 4px 16px rgba(91,61,140,.4); }
+      .btn-primary:active { transform:none; }
+      .btn-ghost {
+        background:transparent; color:var(--text-secondary); border:1.5px solid var(--border);
+      }
+      .btn-ghost:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-faint); }
+      .btn-danger-ghost {
+        background:transparent; color:var(--danger); border:1.5px solid rgba(239,68,68,.25);
+      }
+      .btn-danger-ghost:hover { background:var(--danger-faint); border-color:var(--danger); }
+      .btn-w100 { width:100%; }
+      .btn-sm { padding:6px 12px; font-size:.8rem; }
+
+      /* ─── MAIN CONTENT ────────────────────────────────────────── */
+      .content-header {
+        display:flex; align-items:center; justify-content:space-between;
+        margin-bottom:20px;
+      }
+      .content-title {
+        font-size:1.5rem; font-weight:800; letter-spacing:-.4px;
+        display:flex; align-items:center; gap:10px;
+      }
+      .count-badge {
+        font-size:.7rem; font-weight:700; padding:2px 8px;
+        background:var(--primary-faint); color:var(--primary);
+        border-radius:100px;
+      }
+
+      /* ─── ALERTS ──────────────────────────────────────────────── */
+      .alert {
+        display:flex; align-items:flex-start; gap:10px;
+        padding:12px 16px; border-radius:var(--radius-sm);
+        font-size:.875rem; margin-bottom:12px;
+      }
+      .alert-success { background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
+      .alert-error, .alert-danger { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+      .alert-info { background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; }
+      .alert-warning { background:#fffbeb; border:1px solid #fde68a; color:#92400e; }
+      .alert-close { margin-left:auto; cursor:pointer; opacity:.5; background:none; border:none; font-size:1rem; color:inherit; transition:opacity var(--transition); }
+      .alert-close:hover { opacity:1; }
+
+      /* ─── PROJECT CARDS ───────────────────────────────────────── */
+      .projects-grid {
+        display:grid; grid-template-columns:repeat(auto-fill, minmax(290px,1fr));
+        gap:16px;
+      }
+      .project-card {
+        background:var(--surface); border:1px solid var(--border);
+        border-radius:var(--radius-lg); overflow:hidden;
+        transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+        display:flex; flex-direction:column;
+        position:relative;
+      }
+      .project-card::before {
+        content:''; position:absolute; left:0; top:0; bottom:0;
+        width:4px; border-radius:4px 0 0 4px;
+      }
+      .card-high::before { background:var(--danger); }
+      .card-medium::before { background:var(--warning); }
+      .card-low::before { background:var(--success); }
+
+      .project-card:hover {
+        transform:translateY(-4px); border-color:rgba(91,61,140,.2);
+        box-shadow:var(--shadow-lg);
+      }
+
+      .card-body { padding:20px 20px 16px 24px; flex:1; }
+      .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:10px; }
+      .project-name {
+        font-size:1rem; font-weight:700; color:var(--text-primary);
+        line-height:1.35; letter-spacing:-.2px;
+      }
+      .priority-badge {
+        flex-shrink:0; font-size:.72rem; font-weight:700;
+        padding:3px 9px; border-radius:100px; letter-spacing:.2px;
+      }
+      .badge-high { background:var(--danger-faint); color:var(--danger); }
+      .badge-medium { background:var(--warning-faint); color:#92400e; }
+      .badge-low { background:var(--success-faint); color:#166534; }
+
+      .project-desc {
+        font-size:.83rem; color:var(--text-secondary); line-height:1.6;
+        margin-bottom:14px; min-height:2.4em;
+      }
+
+      .card-meta { display:flex; flex-direction:column; gap:6px; }
+      .meta-row {
+        display:flex; align-items:center; gap:7px;
+        font-size:.78rem; color:var(--text-muted);
+      }
+      .meta-row i { width:12px; text-align:center; flex-shrink:0; }
+
+      .card-footer {
+        padding:12px 20px 14px 24px;
+        border-top:1px solid var(--border);
+        background:rgba(247,246,251,.5);
+        display:flex; gap:8px;
+      }
+
+      /* ─── EMPTY STATE ─────────────────────────────────────────── */
+      .empty-state {
+        grid-column:1/-1; text-align:center;
+        padding:72px 24px; color:var(--text-muted);
+      }
+      .empty-icon {
+        width:80px; height:80px; border-radius:24px;
+        background:var(--primary-faint);
+        display:inline-flex; align-items:center; justify-content:center;
+        font-size:2rem; color:var(--primary); margin-bottom:20px;
+      }
+      .empty-state h4 { font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:8px; }
+      .empty-state p { font-size:.9rem; margin-bottom:24px; }
+
+      /* ─── MODAL ───────────────────────────────────────────────── */
+      .modal-overlay {
+        position:fixed; inset:0; background:rgba(20,10,40,.45);
+        backdrop-filter:blur(4px); z-index:2000;
+        display:none; align-items:center; justify-content:center; padding:24px;
+      }
+      .modal-overlay.open { display:flex; animation:fadeIn .2s ease; }
+      .modal-box {
+        background:var(--surface); border-radius:var(--radius-lg);
+        width:100%; max-width:520px; max-height:90vh; overflow-y:auto;
+        box-shadow:var(--shadow-lg);
+        animation:slideUp .25s ease;
+      }
+      @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+      .modal-header {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:20px 24px 0; margin-bottom:20px;
+      }
+      .modal-title { font-size:1.05rem; font-weight:700; color:var(--text-primary); }
+      .modal-close {
+        width:32px; height:32px; border-radius:var(--radius-sm);
+        border:none; background:none; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        color:var(--text-muted); font-size:1rem;
+        transition: background var(--transition), color var(--transition);
+      }
+      .modal-close:hover { background:var(--bg); color:var(--text-primary); }
+      .modal-body { padding:0 24px 20px; }
+      .modal-footer {
+        display:flex; justify-content:flex-end; gap:8px;
+        padding:16px 24px; border-top:1px solid var(--border);
+        background:var(--bg); border-radius:0 0 var(--radius-lg) var(--radius-lg);
+      }
+
+      /* ─── FORM ELEMENTS ───────────────────────────────────────── */
+      .form-group { margin-bottom:16px; }
+      .form-label { font-size:.8rem; font-weight:600; color:var(--text-secondary); margin-bottom:6px; display:block; }
+      .form-label .req { color:var(--danger); margin-left:2px; }
+      .form-control, .form-select {
+        width:100%; padding:9px 12px;
+        border:1.5px solid var(--border); border-radius:var(--radius-sm);
+        font-family:inherit; font-size:.875rem; color:var(--text-primary);
+        background:var(--bg); outline:none;
+        transition:border-color var(--transition), box-shadow var(--transition), background var(--transition);
+      }
+      .form-control:focus, .form-select:focus {
+        border-color:var(--primary); background:var(--surface);
+        box-shadow:0 0 0 3px var(--primary-faint);
+      }
+      textarea.form-control { resize:vertical; min-height:80px; }
+      .form-hint { font-size:.75rem; color:var(--text-muted); margin-top:4px; }
+      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+      /* delete modal specific */
+      .delete-modal-box { max-width:360px; }
+      .delete-body { padding:12px 24px 24px; }
+      .delete-body p { font-size:.9rem; color:var(--text-secondary); line-height:1.6; }
+
+      /* ─── RESPONSIVE ──────────────────────────────────────────── */
+      @media (max-width:900px) {
+        .page-wrap { grid-template-columns:1fr; }
+        .sidebar { position:static; }
+        .main-nav { display:none; }
+      }
+      @media (max-width:600px) {
+        .page-wrap { padding-left:16px; padding-right:16px; }
+        .projects-grid { grid-template-columns:1fr; }
+        .form-row { grid-template-columns:1fr; }
+      }
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container">
-        <a class="navbar-brand" href="#"><i class="fas fa-project-diagram me-2"></i>МыМыМы</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'index' %}"><i class="fas fa-home me-1"></i>Главная</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" href="{% url 'projects' %}"><i class="fas fa-project-diagram me-1"></i>Проекты</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'tasks' %}"><i class="fas fa-tasks me-1"></i>Задачи</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'workload' %}"><i class="fas fa-chart-column me-1"></i>Нагрузка</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                {% if user.profile.image %}
-                  <img src="{{ user.profile.image.url }}" alt="" class="avatar me-1" />
-                {% else %}
-                  <img src="https://ui-avatars.com/api/?name={{ user.profile.display_name|urlencode }}&size=64&background=46344e&color=fff" alt="" class="avatar me-1" />
-                {% endif %}
-                {{ user.profile.display_name }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Профиль</a></li>
-                {% if is_admin %}
-                <li><a class="dropdown-item" href="{% url 'admin_create_employee' %}"><i class="fas fa-user-plus me-2"></i>Новый сотрудник</a></li>
-                {% endif %}
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <form action="{% url 'logout' %}" method="post" class="m-0">{% csrf_token %}
-                    <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Выход</button>
-                  </form>
-                </li>
-              </ul>
-            </li>
-          </ul>
+
+    <!-- ─── HEADER ─────────────────────────────────────────────── -->
+    <header class="main-header">
+      <div class="header-inner">
+        <a href="{% url 'index' %}" class="logo">
+          <i class="fas fa-layer-group"></i>Maager
+        </a>
+        <nav class="main-nav">
+          <a href="{% url 'index' %}"><i class="fas fa-home"></i>Главная</a>
+          <a href="{% url 'projects' %}" class="active"><i class="fas fa-folder"></i>Проекты</a>
+          <a href="{% url 'tasks' %}"><i class="fas fa-check-square"></i>Задачи</a>
+          <a href="{% url 'workload' %}"><i class="fas fa-chart-bar"></i>Нагрузка</a>
+        </nav>
+        <div class="header-right">
+          <div class="user-menu" id="userMenu">
+            <button class="user-trigger" onclick="toggleUserMenu()">
+              {% if user.profile.image %}
+                <img src="{{ user.profile.image.url }}" alt="" class="user-avatar" />
+              {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ user.profile.display_name|urlencode }}&size=64&background=5b3d8c&color=fff" alt="" class="user-avatar" />
+              {% endif %}
+              <span>{{ user.profile.display_name }}</span>
+              <i class="fas fa-chevron-down chevron"></i>
+            </button>
+            <div class="dropdown-menu">
+              <a href="{% url 'profile' %}" class="dropdown-item"><i class="fas fa-user"></i>Профиль</a>
+              {% if is_admin %}
+              <a href="{% url 'admin_create_employee' %}" class="dropdown-item"><i class="fas fa-user-plus"></i>Новый сотрудник</a>
+              {% endif %}
+              <div class="dropdown-divider"></div>
+              <form action="{% url 'logout' %}" method="post">{% csrf_token %}
+                <button type="submit" class="dropdown-item danger"><i class="fas fa-sign-out-alt"></i>Выход</button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
-    </nav>
+    </header>
 
-    <div class="container py-4">
-      {% if messages %}
+    <!-- ─── PAGE ───────────────────────────────────────────────── -->
+    <div class="page-wrap">
+
+      <!-- ─── SIDEBAR ─────────────────────────────────────────── -->
+      <aside class="sidebar">
+        <div class="sidebar-title">Фильтры</div>
+
+        <form method="get" action="{% url 'projects' %}" id="filterForm">
+          <div class="filter-group">
+            <span class="filter-label">Приоритет</span>
+
+            <label class="priority-option">
+              <input type="checkbox" name="priority" value="high" {% if 'high' in selected_priorities %}checked{% endif %} onchange="this.form.submit()" />
+              <span class="p-check"></span>
+              <span class="priority-dot dot-high"></span>
+              <span class="p-label">Высокий</span>
+            </label>
+            <label class="priority-option">
+              <input type="checkbox" name="priority" value="medium" {% if 'medium' in selected_priorities %}checked{% endif %} onchange="this.form.submit()" />
+              <span class="p-check"></span>
+              <span class="priority-dot dot-medium"></span>
+              <span class="p-label">Средний</span>
+            </label>
+            <label class="priority-option">
+              <input type="checkbox" name="priority" value="low" {% if 'low' in selected_priorities %}checked{% endif %} onchange="this.form.submit()" />
+              <span class="p-check"></span>
+              <span class="priority-dot dot-low"></span>
+              <span class="p-label">Низкий</span>
+            </label>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <div class="filter-group">
+            <span class="filter-label">Срок сдачи</span>
+            <div class="date-group">
+              <div class="date-field">
+                <span>От</span>
+                <input type="date" name="date_from" class="date-input" value="{{ date_from }}" onchange="this.form.submit()" />
+              </div>
+              <div class="date-field">
+                <span>До</span>
+                <input type="date" name="date_to" class="date-input" value="{{ date_to }}" onchange="this.form.submit()" />
+              </div>
+            </div>
+          </div>
+
+          {% if selected_priorities or date_from or date_to %}
+          <div class="sidebar-divider"></div>
+          <a href="{% url 'projects' %}" class="btn btn-ghost btn-w100" style="font-size:.8rem;">
+            <i class="fas fa-times"></i> Сбросить фильтры
+          </a>
+          {% endif %}
+        </form>
+      </aside>
+
+      <!-- ─── MAIN ─────────────────────────────────────────────── -->
+      <main>
+        <!-- Alerts -->
         {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          <div class="alert alert-{{ message.tags }}">
+            <i class="fas fa-{% if 'success' in message.tags %}check-circle{% elif 'error' in message.tags or 'danger' in message.tags %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+            <span>{{ message }}</span>
+            <button class="alert-close" onclick="this.parentElement.remove()">&#x2715;</button>
           </div>
         {% endfor %}
-      {% endif %}
 
-      <div class="row">
-        <!-- Боковая панель -->
-        <div class="col-lg-3 mb-4">
-          <div class="sidebar">
-            <h5 class="mb-4"><i class="fas fa-filter me-2"></i>Фильтры</h5>
-            <form method="get" action="{% url 'projects' %}">
-              <div class="mb-4">
-                <label class="form-label fw-semibold">Приоритет</label>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="priority" value="high" id="highPriority" {% if 'high' in selected_priorities %}checked{% endif %} />
-                  <label class="form-check-label" for="highPriority"><span class="badge bg-danger me-1">●</span>Высокий</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="priority" value="medium" id="mediumPriority" {% if 'medium' in selected_priorities %}checked{% endif %} />
-                  <label class="form-check-label" for="mediumPriority"><span class="badge bg-warning me-1">●</span>Средний</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="priority" value="low" id="lowPriority" {% if 'low' in selected_priorities %}checked{% endif %} />
-                  <label class="form-check-label" for="lowPriority"><span class="badge bg-success me-1">●</span>Низкий</label>
-                </div>
-              </div>
-              <div class="mb-4">
-                <label class="form-label fw-semibold">Срок сдачи</label>
-                <label class="form-label text-muted small">От</label>
-                <input type="date" name="date_from" class="form-control mb-2" value="{{ request.GET.date_from }}" />
-                <label class="form-label text-muted small">До</label>
-                <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}" />
-              </div>
-              <button type="submit" class="btn btn-primary w-100 mb-2"><i class="fas fa-filter me-2"></i>Применить</button>
-              <a href="{% url 'projects' %}" class="btn btn-outline-secondary w-100"><i class="fas fa-times me-2"></i>Сбросить</a>
-            </form>
-          </div>
+        <!-- Header -->
+        <div class="content-header">
+          <h1 class="content-title">
+            Проекты
+            <span class="count-badge">{{ projects.count }}</span>
+          </h1>
+          <button class="btn btn-primary" onclick="openModal('newProjectModal')">
+            <i class="fas fa-plus"></i>Новый проект
+          </button>
         </div>
 
-        <!-- Основная область -->
-        <div class="col-lg-9">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">
-              <i class="fas fa-folder-open me-2"></i>Мои проекты
-              <span class="badge bg-secondary ms-2" style="font-size:0.6em;vertical-align:middle;">{{ projects.count }}</span>
-            </h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
-              <i class="fas fa-plus me-2"></i>Новый проект
-            </button>
-          </div>
-
+        <!-- Cards -->
+        <div class="projects-grid">
           {% if projects %}
-            <div class="row mb-4">
-              {% for project in projects %}
-                <div class="col-md-4 mb-3">
-                  <div class="project-card card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                      <span class="text-truncate me-2" title="{{ project.name }}">{{ project.name }}</span>
-                      {% if project.priority == 'high' %}
-                        <span class="badge bg-danger">Высокий</span>
-                      {% elif project.priority == 'medium' %}
-                        <span class="badge bg-warning text-dark">Средний</span>
-                      {% else %}
-                        <span class="badge bg-success">Низкий</span>
-                      {% endif %}
-                    </div>
-                    <div class="card-body">
-                      <p class="card-text text-muted small">{{ project.description|default:"Описание не указано"|truncatechars:100 }}</p>
+            {% for project in projects %}
+              <div class="project-card card-{{ project.priority|default:'low' }}">
+                <div class="card-body">
+                  <div class="card-top">
+                    <h3 class="project-name">{{ project.name }}</h3>
+                    {% if project.priority == 'high' %}
+                      <span class="priority-badge badge-high">Высокий</span>
+                    {% elif project.priority == 'medium' %}
+                      <span class="priority-badge badge-medium">Средний</span>
+                    {% else %}
+                      <span class="priority-badge badge-low">Низкий</span>
+                    {% endif %}
+                  </div>
 
-                      {% if project.start_date or project.end_date %}
-                        <div class="mb-2">
-                          <small class="text-muted">
-                            <i class="far fa-calendar me-1"></i>
-                            {% if project.start_date %}{{ project.start_date|date:"d.m.Y" }}{% endif %}
-                            {% if project.start_date and project.end_date %} — {% endif %}
-                            {% if project.end_date %}{{ project.end_date|date:"d.m.Y" }}{% endif %}
-                          </small>
-                        </div>
-                      {% endif %}
-                      <div class="d-flex justify-content-between align-items-center mt-2">
-                        <small class="text-muted">
-                          <i class="fas fa-user me-1"></i>
-                          {% if project.assigned_to %}{{ project.assigned_to.get_full_name|default:project.assigned_to.username }}{% else %}Не назначен{% endif %}
-                        </small>
-                        <small class="text-muted">{{ project.created_at|date:"d.m.Y" }}</small>
-                      </div>
+                  <p class="project-desc">{{ project.description|default:"Описание не добавлено"|truncatechars:90 }}</p>
+
+                  <div class="card-meta">
+                    {% if project.start_date or project.end_date %}
+                    <div class="meta-row">
+                      <i class="far fa-calendar-alt"></i>
+                      <span>
+                        {% if project.start_date %}{{ project.start_date|date:"d.m.Y" }}{% endif %}
+                        {% if project.start_date and project.end_date %} &mdash; {% endif %}
+                        {% if project.end_date %}{{ project.end_date|date:"d.m.Y" }}{% endif %}
+                      </span>
                     </div>
-                    <div class="card-footer bg-transparent">
-                      <div class="card-actions">
-                        <button class="btn btn-sm btn-outline-secondary flex-fill"
-                          data-bs-toggle="modal" data-bs-target="#editModal{{ project.pk }}">
-                          <i class="fas fa-edit me-1"></i>Изменить
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger"
-                          data-bs-toggle="modal" data-bs-target="#deleteModal{{ project.pk }}" title="Удалить">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
+                    {% endif %}
+                    <div class="meta-row">
+                      <i class="fas fa-user"></i>
+                      <span>
+                        {% if project.assigned_to %}{{ project.assigned_to.get_full_name|default:project.assigned_to.username }}{% else %}Не назначен{% endif %}
+                      </span>
+                    </div>
+                    <div class="meta-row">
+                      <i class="far fa-clock"></i>
+                      <span>Создан {{ project.created_at|date:"d.m.Y" }}</span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Модальное окно редактирования -->
-                <div class="modal fade" id="editModal{{ project.pk }}" tabindex="-1">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Редактировать проект</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-                      <form method="post" action="{% url 'edit_project' project.pk %}">
-                        {% csrf_token %}
-                        <div class="modal-body">
-                          <div class="mb-3">
-                            <label class="form-label">Название *</label>
-                            <input type="text" name="name" class="form-control" value="{{ project.name }}" required maxlength="200" />
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label">Описание</label>
-                            <textarea name="description" class="form-control" rows="3">{{ project.description }}</textarea>
-                          </div>
-                          <div class="row">
-                            <div class="col-md-6 mb-3">
-                              <label class="form-label">Дата начала</label>
-                              <input type="date" name="start_date" class="form-control"
-                                value="{% if project.start_date %}{{ project.start_date|date:'Y-m-d' }}{% endif %}" />
-                            </div>
-                            <div class="col-md-6 mb-3">
-                              <label class="form-label">Дата окончания</label>
-                              <input type="date" name="end_date" class="form-control"
-                                value="{% if project.end_date %}{{ project.end_date|date:'Y-m-d' }}{% endif %}" />
-                            </div>
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label">Приоритет</label>
-                            <select name="priority" class="form-select">
-                              <option value="low" {% if project.priority == 'low' %}selected{% endif %}>Низкий</option>
-                              <option value="medium" {% if project.priority == 'medium' %}selected{% endif %}>Средний</option>
-                              <option value="high" {% if project.priority == 'high' %}selected{% endif %}>Высокий</option>
-                            </select>
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label">Исполнитель проекта</label>
-                            <select name="assigned_to" class="form-select">
-                              <option value="">— Не назначен —</option>
-                              {% for u in all_users %}
-                                <option value="{{ u.pk }}" {% if project.assigned_to_id == u.pk %}selected{% endif %}>
-                                  {{ u.get_full_name|default:u.username }}
-                                </option>
-                              {% endfor %}
-                            </select>
-                            <div class="form-text">Исполнитель добавляется в участники и видит проект.</div>
-                          </div>
-
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                          <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Сохранить</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
+                <div class="card-footer">
+                  <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openModal('editModal{{ project.pk }}')">
+                    <i class="fas fa-pen"></i>Изменить
+                  </button>
+                  <button class="btn btn-danger-ghost btn-sm" onclick="openModal('deleteModal{{ project.pk }}')" title="Удалить проект">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
                 </div>
-
-                <!-- Модальное окно удаления -->
-                <div class="modal fade" id="deleteModal{{ project.pk }}" tabindex="-1">
-                  <div class="modal-dialog modal-sm">
-                    <div class="modal-content">
-                      <div class="modal-header border-0">
-                        <h5 class="modal-title text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Удалить?</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-                      <div class="modal-body">
-                        Удалить проект <strong>«{{ project.name }}»</strong>? Это действие нельзя отменить.
-                      </div>
-                      <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
-                        <form method="post" action="{% url 'delete_project' project.pk %}">
-                          {% csrf_token %}
-                          <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Удалить</button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              {% endfor %}
-            </div>
+              </div>
+            {% endfor %}
           {% else %}
             <div class="empty-state">
-              <i class="fas fa-folder-open d-block"></i>
-              <h5>Проектов пока нет</h5>
-              <p class="text-muted">Создайте свой первый проект</p>
-              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
-                <i class="fas fa-plus me-2"></i>Создать проект
+              <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+              <h4>Проектов пока нет</h4>
+              <p>Создайте первый проект — это займёт меньше минуты</p>
+              <button class="btn btn-primary" onclick="openModal('newProjectModal')">
+                <i class="fas fa-plus"></i>Создать проект
               </button>
             </div>
           {% endif %}
         </div>
+      </main>
+    </div>
+
+    <!-- ═══ MODALS ═══════════════════════════════════════════════ -->
+
+    <!-- Create project -->
+    <div class="modal-overlay" id="newProjectModal" onclick="closeOnOverlay(event, 'newProjectModal')">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span class="modal-title"><i class="fas fa-plus" style="color:var(--primary);margin-right:8px"></i>Новый проект</span>
+          <button class="modal-close" onclick="closeModal('newProjectModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="post" action="{% url 'create_project' %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Название<span class="req">*</span></label>
+              <input type="text" name="name" class="form-control" placeholder="Введите название проекта" required maxlength="200" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Описание</label>
+              <textarea name="description" class="form-control" placeholder="Краткое описание проекта"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Дата начала</label>
+                <input type="date" name="start_date" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Дата окончания</label>
+                <input type="date" name="end_date" class="form-control" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Приоритет</label>
+              <select name="priority" class="form-select">
+                <option value="low">Низкий</option>
+                <option value="medium" selected>Средний</option>
+                <option value="high">Высокий</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Исполнитель проекта</label>
+              <select name="assigned_to" class="form-select">
+                <option value="">— Не назначен —</option>
+                {% for u in all_users %}
+                  <option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-hint">Сотрудник будет добавлен в участники и увидит проект.</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" onclick="closeModal('newProjectModal')">Отмена</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i>Создать</button>
+          </div>
+        </form>
       </div>
     </div>
 
-    <!-- Модальное окно создания проекта -->
-    <div class="modal fade" id="newProjectModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Новый проект</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <form method="post" action="{% url 'create_project' %}">
-            {% csrf_token %}
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label">Название *</label>
-                <input type="text" name="name" class="form-control" placeholder="Введите название" required maxlength="200" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Описание</label>
-                <textarea name="description" class="form-control" rows="3" placeholder="Краткое описание"></textarea>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Дата начала</label>
-                  <input type="date" name="start_date" class="form-control" />
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Дата окончания</label>
-                  <input type="date" name="end_date" class="form-control" />
-                </div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Приоритет</label>
-                <select name="priority" class="form-select">
-                  <option value="low">Низкий</option>
-                  <option value="medium" selected>Средний</option>
-                  <option value="high">Высокий</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Исполнитель проекта</label>
-                <select name="assigned_to" class="form-select">
-                  <option value="">— Не назначен —</option>
-                  {% for u in all_users %}
-                    <option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>
-                  {% endfor %}
-                </select>
-                <div class="form-text">Сотрудник будет добавлен в участники проекта и увидит его в списке.</div>
-              </div>
+    <!-- Edit/Delete modals per project -->
+    {% for project in projects %}
 
+    <!-- Edit modal -->
+    <div class="modal-overlay" id="editModal{{ project.pk }}" onclick="closeOnOverlay(event, 'editModal{{ project.pk }}')">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span class="modal-title"><i class="fas fa-pen" style="color:var(--primary);margin-right:8px"></i>Редактировать проект</span>
+          <button class="modal-close" onclick="closeModal('editModal{{ project.pk }}')"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="post" action="{% url 'edit_project' project.pk %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Название<span class="req">*</span></label>
+              <input type="text" name="name" class="form-control" value="{{ project.name }}" required maxlength="200" />
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-              <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Создать</button>
+            <div class="form-group">
+              <label class="form-label">Описание</label>
+              <textarea name="description" class="form-control">{{ project.description }}</textarea>
             </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Дата начала</label>
+                <input type="date" name="start_date" class="form-control"
+                  value="{% if project.start_date %}{{ project.start_date|date:'Y-m-d' }}{% endif %}" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Дата окончания</label>
+                <input type="date" name="end_date" class="form-control"
+                  value="{% if project.end_date %}{{ project.end_date|date:'Y-m-d' }}{% endif %}" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Приоритет</label>
+              <select name="priority" class="form-select">
+                <option value="low" {% if project.priority == 'low' %}selected{% endif %}>Низкий</option>
+                <option value="medium" {% if project.priority == 'medium' %}selected{% endif %}>Средний</option>
+                <option value="high" {% if project.priority == 'high' %}selected{% endif %}>Высокий</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Исполнитель проекта</label>
+              <select name="assigned_to" class="form-select">
+                <option value="">— Не назначен —</option>
+                {% for u in all_users %}
+                  <option value="{{ u.pk }}" {% if project.assigned_to_id == u.pk %}selected{% endif %}>
+                    {{ u.get_full_name|default:u.username }}
+                  </option>
+                {% endfor %}
+              </select>
+              <div class="form-hint">Исполнитель добавляется в участники и видит проект.</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" onclick="closeModal('editModal{{ project.pk }}')">Отмена</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i>Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete modal -->
+    <div class="modal-overlay" id="deleteModal{{ project.pk }}" onclick="closeOnOverlay(event, 'deleteModal{{ project.pk }}')">
+      <div class="modal-box delete-modal-box">
+        <div class="modal-header">
+          <span class="modal-title" style="color:var(--danger)"><i class="fas fa-exclamation-triangle" style="margin-right:8px"></i>Удалить проект?</span>
+          <button class="modal-close" onclick="closeModal('deleteModal{{ project.pk }}')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="delete-body">
+          <p>Вы удаляете проект <strong>«{{ project.name }}»</strong>. Это действие необратимо — все данные проекта будут потеряны.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('deleteModal{{ project.pk }}')">Отмена</button>
+          <form method="post" action="{% url 'delete_project' project.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" class="btn" style="background:var(--danger);color:#fff">
+              <i class="fas fa-trash-alt"></i>Удалить
+            </button>
           </form>
         </div>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% endfor %}
+
+    <script>
+      /* ── user dropdown ── */
+      function toggleUserMenu() {
+        document.getElementById('userMenu').classList.toggle('open');
+      }
+      document.addEventListener('click', e => {
+        const m = document.getElementById('userMenu');
+        if (m && !m.contains(e.target)) m.classList.remove('open');
+      });
+
+      /* ── modals ── */
+      function openModal(id) {
+        const el = document.getElementById(id);
+        if (el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; }
+      }
+      function closeModal(id) {
+        const el = document.getElementById(id);
+        if (el) { el.classList.remove('open'); document.body.style.overflow = ''; }
+      }
+      function closeOnOverlay(e, id) {
+        if (e.target === e.currentTarget) closeModal(id);
+      }
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal-overlay.open').forEach(m => {
+            m.classList.remove('open'); document.body.style.overflow = '';
+          });
+        }
+      });
+    </script>
   </body>
 </html>
