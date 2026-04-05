@@ -1,55 +1,84 @@
-<!DOCTYPE html>
-<html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Новый сотрудник</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-  </head>
-  <body class="bg-light">
-    <nav class="navbar navbar-dark bg-dark mb-4">
-      <div class="container">
-        <a class="navbar-brand" href="{% url 'projects' %}">
-          <i class="fas fa-arrow-left me-2"></i>К проектам
-        </a>
-      </div>
-    </nav>
-    <div class="container" style="max-width: 640px">
-      <h1 class="h3 mb-3">Добавить сотрудника</h1>
-      <p class="text-muted">
-        Задайте логин и пароль — передайте их сотруднику для входа на страницу
-        «Вход».
-      </p>
-      {% if messages %}
-      {% for message in messages %}
-      <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">{{ message }}</div>
-      {% endfor %}
-      {% endif %}
-      <div class="card shadow-sm mb-4">
-        <div class="card-body p-4">
-          <form method="post" novalidate>
-            {% csrf_token %} {% include 'users/_form_bootstrap.html' with form=form %}
-            <button type="submit" class="btn btn-primary">Создать учётную запись</button>
-          </form>
+{% extends "base.html" %}
+{% block title %}Новый сотрудник — Maager{% endblock %}
+
+{% block extra_css %}
+.employee-layout { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; max-width:960px; }
+.form-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+.form-card-header { padding:18px 24px; border-bottom:1px solid var(--border); }
+.form-card-header h2 { font-size:1.1rem; font-weight:700; color:var(--text-primary); }
+.form-card-header p { font-size:.82rem; color:var(--text-muted); margin-top:4px; }
+.form-card-body { padding:24px; }
+
+.employee-list { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); }
+.elist-header { padding:16px 20px; border-bottom:1px solid var(--border); font-size:.875rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:8px; }
+.elist-item { display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid var(--border); }
+.elist-item:last-child { border-bottom:none; }
+.elist-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.elist-name { font-size:.875rem; font-weight:600; color:var(--text-primary); }
+.elist-login { font-size:.78rem; color:var(--text-muted); }
+.elist-empty { padding:24px 20px; font-size:.875rem; color:var(--text-muted); text-align:center; }
+
+@media(max-width:768px){ .employee-layout{grid-template-columns:1fr;} }
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px">
+  <a href="{% url 'projects' %}" class="btn btn-ghost btn-sm"><i class="fas fa-arrow-left"></i>К проектам</a>
+</div>
+
+<div class="employee-layout">
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <h2><i class="fas fa-user-plus" style="color:var(--primary);margin-right:8px"></i>Добавить сотрудника</h2>
+      <p>Задайте логин и пароль — передайте их сотруднику для входа.</p>
+    </div>
+    <div class="form-card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i><span>{{ form.non_field_errors }}</span></div>
+        {% endif %}
+        {% for field in form %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <input type="{{ field.field.widget.input_type|default:'text' }}"
+                 id="{{ field.id_for_label }}"
+                 name="{{ field.html_name }}"
+                 value="{{ field.value|default:'' }}"
+                 class="form-control"
+                 {% if field.field.required %}required{% endif %}
+                 {% if field.field.max_length %}maxlength="{{ field.field.max_length }}"{% endif %}
+                 autocomplete="off" />
+          {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+          {% for err in field.errors %}<div class="form-error">{{ err }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary btn-w100"><i class="fas fa-user-plus"></i>Создать учётную запись</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Employee list -->
+  <div class="employee-list">
+    <div class="elist-header">
+      <i class="fas fa-users" style="color:var(--primary)"></i>
+      Сотрудники
+      {% if employees %}<span style="background:var(--primary-faint);color:var(--primary);font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:100px">{{ employees|length }}</span>{% endif %}
+    </div>
+    {% if employees %}
+      {% for u in employees %}
+      <div class="elist-item">
+        <img src="https://ui-avatars.com/api/?name={{ u.profile.display_name|urlencode }}&size=64&background=5b3d8c&color=fff" class="elist-avatar"/>
+        <div>
+          <div class="elist-name">{{ u.profile.display_name }}</div>
+          <div class="elist-login">@{{ u.username }}</div>
         </div>
       </div>
-      {% if employees %}
-      <h2 class="h5">Сотрудники</h2>
-      <ul class="list-group">
-        {% for u in employees %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <span>{{ u.profile.display_name }} <small class="text-muted">({{ u.username }})</small></span>
-        </li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </div>
-  </body>
-</html>
+      {% endfor %}
+    {% else %}
+      <div class="elist-empty">Сотрудников пока нет.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,251 +1,228 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Задачи</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <style>
-    :root {
-      --primary-color: #46344e;
-      --secondary-color: #9b786f;
-      --accent-color: #d2632b;
-    }
-    body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2b2d42; }
-    .navbar-brand { font-weight: 700; }
-    .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
-    .task-card {
-      border: none;
-      border-radius: 10px;
-      border-left: 4px solid var(--accent-color);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      transition: transform 0.2s, box-shadow 0.2s;
-      background: #fff;
-    }
-    .task-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
-    .task-card.prio-low { border-left-color: #198754; }
-    .task-card.prio-medium { border-left-color: #ffc107; }
-    .task-card.prio-high { border-left-color: #dc3545; }
-    .filter-panel { background: #fff; border-radius: 10px; padding: 1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .mini-progress { height: 6px; border-radius: 3px; background: #e9ecef; overflow: hidden; }
-    .mini-progress-bar { height: 100%; background: var(--accent-color); border-radius: 3px; }
-  </style>
-</head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-      <a class="navbar-brand" href="{% url 'index' %}"><i class="fas fa-project-diagram me-2"></i>МыМыМы</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="{% url 'index' %}"><i class="fas fa-home me-1"></i>Главная</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'projects' %}"><i class="fas fa-folder-open me-1"></i>Проекты</a></li>
-          <li class="nav-item"><a class="nav-link active" href="{% url 'tasks' %}"><i class="fas fa-tasks me-1"></i>Задачи</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'workload' %}"><i class="fas fa-chart-column me-1"></i>Нагрузка</a></li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-              {% if user.profile.image %}
-                <img src="{{ user.profile.image.url }}" alt="" class="avatar me-1" />
-              {% else %}
-                <img src="https://ui-avatars.com/api/?name={{ user.profile.display_name|urlencode }}&size=64&background=46344e&color=fff" alt="" class="avatar me-1" />
-              {% endif %}
-              {{ user.profile.display_name }}
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Профиль</a></li>
-              {% if is_admin %}
-              <li><a class="dropdown-item" href="{% url 'admin_create_employee' %}"><i class="fas fa-user-plus me-2"></i>Новый сотрудник</a></li>
-              {% endif %}
-              <li><hr class="dropdown-divider" /></li>
-              <li>
-                <form action="{% url 'logout' %}" method="post" class="m-0">{% csrf_token %}
-                  <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Выход</button>
-                </form>
-              </li>
-            </ul>
-          </li>
-        </ul>
+{% extends "base.html" %}
+{% block title %}Задачи — Maager{% endblock %}
+
+{% block extra_css %}
+.tasks-layout { display:grid; grid-template-columns:220px 1fr; gap:24px; align-items:start; }
+.sidebar {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:18px;
+  position:sticky; top:calc(var(--header-h) + 16px);
+}
+.sidebar-title { font-size:.7rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:14px; }
+.filter-label { font-size:.78rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; display:block; }
+.form-select-custom {
+  width:100%; padding:8px 10px; border:1.5px solid var(--border);
+  border-radius:var(--radius-sm); font-family:inherit; font-size:.82rem;
+  color:var(--text-primary); background:var(--bg); outline:none; cursor:pointer;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239b95b0'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+  padding-right:28px;
+}
+.form-select-custom:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-faint); }
+.sidebar-divider { height:1px; background:var(--border); margin:14px 0; }
+
+.content-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.content-title { font-size:1.5rem; font-weight:800; letter-spacing:-.4px; display:flex; align-items:center; gap:10px; }
+.count-badge { font-size:.7rem; font-weight:700; padding:2px 8px; background:var(--primary-faint); color:var(--primary); border-radius:100px; }
+
+.task-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:0; margin-bottom:12px;
+  position:relative; overflow:hidden;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  display:flex; align-items:stretch;
+}
+.task-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:rgba(91,61,140,.2); }
+.task-priority-stripe { width:4px; flex-shrink:0; }
+.stripe-high { background:var(--danger); }
+.stripe-medium { background:var(--warning); }
+.stripe-low { background:var(--success); }
+.task-body { padding:16px 20px; flex:1; display:flex; align-items:center; gap:16px; }
+.task-main { flex:1; min-width:0; }
+.task-title-link {
+  font-size:.95rem; font-weight:700; color:var(--text-primary);
+  text-decoration:none; display:block; margin-bottom:4px;
+  transition:color var(--transition);
+}
+.task-title-link:hover { color:var(--primary); }
+.task-desc { font-size:.8rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:500px; margin-bottom:8px; }
+.task-meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.meta-chip { display:flex; align-items:center; gap:5px; font-size:.75rem; color:var(--text-muted); }
+.meta-chip i { font-size:.7rem; }
+
+.task-progress { flex-shrink:0; text-align:right; min-width:80px; }
+.prog-num { font-size:1.1rem; font-weight:800; color:var(--primary); }
+.prog-bar-wrap { width:80px; height:4px; background:var(--border); border-radius:2px; margin-top:4px; }
+.prog-bar-fill { height:100%; border-radius:2px; background:var(--primary); transition:width .4s; }
+
+.empty-state { text-align:center; padding:72px 24px; color:var(--text-muted); }
+.empty-icon { width:80px; height:80px; border-radius:24px; background:var(--primary-faint); display:inline-flex; align-items:center; justify-content:center; font-size:2rem; color:var(--primary); margin-bottom:20px; }
+.empty-state h4 { font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:8px; }
+.empty-state p { font-size:.9rem; margin-bottom:0; }
+
+@media (max-width:900px) { .tasks-layout { grid-template-columns:1fr; } .sidebar { position:static; } }
+{% endblock %}
+
+{% block content %}
+<div class="tasks-layout">
+  <!-- Sidebar / Filters -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Фильтры</div>
+    <form method="get" action="{% url 'tasks' %}" id="taskFilter">
+      <div style="margin-bottom:14px">
+        <span class="filter-label">Статус</span>
+        <select name="status" class="form-select-custom" onchange="this.form.submit()">
+          <option value="">Все статусы</option>
+          {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
       </div>
-    </div>
-  </nav>
+      <div style="margin-bottom:14px">
+        <span class="filter-label">Приоритет</span>
+        <select name="priority" class="form-select-custom" onchange="this.form.submit()">
+          <option value="">Все приоритеты</option>
+          {% for val, label in priority_choices %}
+            <option value="{{ val }}" {% if current_priority == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="margin-bottom:14px">
+        <span class="filter-label">Проект</span>
+        <select name="project" class="form-select-custom" onchange="this.form.submit()">
+          <option value="">Все проекты</option>
+          {% for p in projects %}
+            <option value="{{ p.pk }}" {% if current_project_id == p.pk %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if current_status or current_priority or current_project_id %}
+      <div class="sidebar-divider"></div>
+      <a href="{% url 'tasks' %}" class="btn btn-ghost btn-w100" style="font-size:.8rem;"><i class="fas fa-times"></i>Сбросить</a>
+      {% endif %}
+    </form>
+  </aside>
 
-  <div class="container py-4">
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      {% endfor %}
-    {% endif %}
-
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-      <h1 class="h3 mb-0"><i class="fas fa-tasks me-2"></i>Задачи</h1>
+  <!-- Main -->
+  <main>
+    <div class="content-header">
+      <h1 class="content-title">
+        Задачи
+        {% if tasks %}<span class="count-badge">{{ tasks|length }}</span>{% endif %}
+      </h1>
       {% if is_admin %}
-      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTaskModal">
-        <i class="fas fa-plus me-2"></i>Новая задача
+      <button class="btn btn-primary" onclick="openModal('newTaskModal')">
+        <i class="fas fa-plus"></i>Новая задача
       </button>
       {% endif %}
     </div>
 
-    <div class="filter-panel mb-4">
-      <form method="get" action="{% url 'tasks' %}" class="row g-2 align-items-end">
-        <div class="col-md-3">
-          <label class="form-label small text-muted mb-0">Статус</label>
-          <select name="status" class="form-select form-select-sm">
-            <option value="">Все</option>
-            {% for val, label in status_choices %}
-              <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label small text-muted mb-0">Приоритет</label>
-          <select name="priority" class="form-select form-select-sm">
-            <option value="">Все</option>
-            {% for val, label in priority_choices %}
-              <option value="{{ val }}" {% if current_priority == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small text-muted mb-0">Проект</label>
-          <select name="project" class="form-select form-select-sm">
-            <option value="">Все проекты</option>
-            {% for p in projects %}
-              <option value="{{ p.pk }}" {% if current_project_id == p.pk %}selected{% endif %}>{{ p.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-2 d-flex gap-1">
-          <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="fas fa-filter"></i></button>
-          <a href="{% url 'tasks' %}" class="btn btn-outline-secondary btn-sm" title="Сбросить"><i class="fas fa-times"></i></a>
-        </div>
-      </form>
-    </div>
-
     {% if tasks %}
-      <p class="text-muted small mb-3">Всего: {{ tasks|length }}</p>
       {% for task in tasks %}
-        <div class="card task-card prio-{{ task.priority }} mb-3">
-          <div class="card-body">
-            <div class="row align-items-center">
-              <div class="col-lg-8">
-                <a href="{% url 'task_detail' task.id %}" class="h5 mb-2 text-decoration-none text-dark d-inline-block">{{ task.title }}</a>
-                {% if task.description %}
-                  <p class="text-muted small mb-2 mb-lg-0">{{ task.description|truncatechars:200 }}</p>
-                {% endif %}
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                  <span class="badge bg-{{ task.status_color }}">{{ task.get_status_display }}</span>
-                  <span class="badge bg-light text-dark border">{{ task.get_priority_display }}</span>
-                  <span class="text-muted small"><i class="fas fa-folder me-1"></i>{{ task.project.name }}</span>
-                  {% if task.assigned_to %}
-                    <span class="text-muted small"><i class="fas fa-user me-1"></i>{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</span>
-                  {% else %}
-                    <span class="text-muted small"><i class="fas fa-user me-1"></i>Не назначена</span>
-                  {% endif %}
-                  {% if task.due_date %}
-                    <span class="text-muted small"><i class="far fa-calendar me-1"></i>{{ task.due_date|date:"d.m.Y" }}</span>
-                  {% endif %}
-                </div>
-              </div>
-              <div class="col-lg-4 mt-3 mt-lg-0 text-lg-end">
-                <div class="fw-bold text-primary mb-1">{{ task.progress }}%</div>
-                <div class="mini-progress ms-lg-auto" style="max-width: 140px; margin-left: auto;">
-                  <div class="mini-progress-bar" style="width: {{ task.progress }}%"></div>
-                </div>
-              </div>
+      <div class="task-card">
+        <div class="task-priority-stripe stripe-{{ task.priority }}"></div>
+        <div class="task-body">
+          <div class="task-main">
+            <a href="{% url 'task_detail' task.id %}" class="task-title-link">{{ task.title }}</a>
+            {% if task.description %}
+              <div class="task-desc">{{ task.description|truncatechars:120 }}</div>
+            {% endif %}
+            <div class="task-meta">
+              <span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span>
+              <span class="meta-chip"><i class="fas fa-folder"></i>{{ task.project.name }}</span>
+              {% if task.assigned_to %}
+                <span class="meta-chip"><i class="fas fa-user"></i>{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</span>
+              {% else %}
+                <span class="meta-chip"><i class="fas fa-user"></i>Не назначена</span>
+              {% endif %}
+              {% if task.due_date %}
+                <span class="meta-chip"><i class="far fa-calendar"></i>{{ task.due_date|date:"d.m.Y" }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="task-progress">
+            <div class="prog-num">{{ task.progress }}%</div>
+            <div class="prog-bar-wrap">
+              <div class="prog-bar-fill" style="width:{{ task.progress }}%"></div>
             </div>
           </div>
         </div>
+      </div>
       {% endfor %}
     {% else %}
-      <div class="text-center py-5 text-muted">
-        <i class="fas fa-clipboard-list fa-3x mb-3 opacity-25"></i>
-        <p class="mb-2">Задач пока нет.</p>
-        {% if is_admin %}
-          <p class="small">Создайте задачу кнопкой «Новая задача» и назначьте исполнителя.</p>
-        {% else %}
-          <p class="small">Ожидайте назначения задач администратором.</p>
-        {% endif %}
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-clipboard-list"></i></div>
+        <h4>Задач пока нет</h4>
+        <p>
+          {% if is_admin %}Создайте задачу и назначьте исполнителя.
+          {% else %}Ожидайте назначения задач администратором.{% endif %}
+        </p>
       </div>
     {% endif %}
-  </div>
+  </main>
+</div>
 
-  {% if is_admin %}
-  <div class="modal fade" id="newTaskModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <form method="post" action="{% url 'tasks' %}">
-          {% csrf_token %}
-          <div class="modal-header" style="background:linear-gradient(135deg,#46344e,#9b786f)">
-            <h5 class="modal-title text-white"><i class="fas fa-plus me-2"></i>Новая задача</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label fw-bold">Название <span class="text-danger">*</span></label>
-              <input type="text" name="title" class="form-control" required maxlength="200" placeholder="Что нужно сделать?" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold">Описание</label>
-              <textarea name="description" class="form-control" rows="3" placeholder="Подробности"></textarea>
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label fw-bold">Проект <span class="text-danger">*</span></label>
-                <select name="project" class="form-select" required>
-                  <option value="">— выберите проект —</option>
-                  {% for p in projects %}
-                    <option value="{{ p.pk }}">{{ p.name }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold">Исполнитель</label>
-                <select name="assigned_to" class="form-select">
-                  <option value="">Не назначен</option>
-                  {% for u in all_users %}
-                    <option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Статус</label>
-                <select name="status" class="form-select">
-                  {% for val, label in status_choices %}
-                    <option value="{{ val }}" {% if val == 'todo' %}selected{% endif %}>{{ label }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Приоритет</label>
-                <select name="priority" class="form-select">
-                  {% for val, label in priority_choices %}
-                    <option value="{{ val }}" {% if val == 'medium' %}selected{% endif %}>{{ label }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Срок</label>
-                <input type="date" name="due_date" class="form-control" />
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-            <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Создать</button>
-          </div>
-        </form>
-      </div>
+{% if is_admin %}
+<!-- Modal: New Task -->
+<div class="modal-overlay" id="newTaskModal" onclick="closeOnOverlay(event,'newTaskModal')">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fas fa-plus" style="color:var(--primary);margin-right:8px"></i>Новая задача</span>
+      <button class="modal-close" onclick="closeModal('newTaskModal')"><i class="fas fa-times"></i></button>
     </div>
+    <form method="post" action="{% url 'tasks' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Название<span class="req">*</span></label>
+          <input type="text" name="title" class="form-control" required maxlength="200" placeholder="Что нужно сделать?" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Описание</label>
+          <textarea name="description" class="form-control" placeholder="Подробности задачи"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Проект<span class="req">*</span></label>
+            <select name="project" class="form-control" required>
+              <option value="">— выберите проект —</option>
+              {% for p in projects %}<option value="{{ p.pk }}">{{ p.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Исполнитель</label>
+            <select name="assigned_to" class="form-control">
+              <option value="">Не назначен</option>
+              {% for u in all_users %}<option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Статус</label>
+            <select name="status" class="form-control">
+              {% for val, label in status_choices %}<option value="{{ val }}" {% if val == 'todo' %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Приоритет</label>
+            <select name="priority" class="form-control">
+              {% for val, label in priority_choices %}<option value="{{ val }}" {% if val == 'medium' %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Срок выполнения</label>
+          <input type="date" name="due_date" class="form-control" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('newTaskModal')">Отмена</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i>Создать</button>
+      </div>
+    </form>
   </div>
-  {% endif %}
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endif %}
+{% endblock %}
