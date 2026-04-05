@@ -76,6 +76,7 @@
         margin-bottom: 15px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         transition: all 0.2s ease;
+        cursor: pointer;
       }
 
       .task-card:hover {
@@ -158,13 +159,35 @@
         padding: 20px;
         height: 100%;
       }
+      
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background-color: white;
+        border-radius: 12px;
+      }
+      
+      .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 20px;
+      }
+      
+      .empty-state h4 {
+        color: #6c757d;
+        margin-bottom: 10px;
+      }
+      
+      .empty-state p {
+        color: #adb5bd;
+      }
     </style>
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
-        <a class="navbar-brand" href="#">
-          <i class="fas fa-project-diagram me-2"></i>МыМыМы
+        <a class="navbar-brand" href="{% url 'home' %}">
+          <i class="fas fa-project-diagram me-2"></i>CRM
         </a>
         <button
           class="navbar-toggler"
@@ -176,23 +199,21 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
-
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'index' %}">
-                <i class="fas fa-home me-1"></i>Главная</a>
-            </li>
-
             <li class="nav-item">
               <a class="nav-link active" href="{% url 'projects' %}"
-                ><i class="fas fa-project-diagram"></i> Проекты</a
+                ><i class="fas fa-project-diagram me-1"></i> Проекты</a
               >
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'tasks' %}"
                 ><i class="fas fa-tasks me-1"></i> Задачи</a
               >
-
-          
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'team' %}"
+                ><i class="fas fa-users me-1"></i> Команда</a
+              >
+            </li>
             <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
@@ -229,11 +250,6 @@
                   >
                 </li>
                 {% endif %}
-                <li>
-                  <a class="dropdown-item" href="#"
-                    ><i class="fas fa-cog me-2"></i>Настройки</a
-                  >
-                </li>
                 <li><hr class="dropdown-divider" /></li>
                 <li>
                   <a class="dropdown-item" href="{% url 'logout' %}"
@@ -255,60 +271,32 @@
           <div class="sidebar">
             <h5 class="mb-4"><i class="fas fa-filter me-2"></i>Фильтры</h5>
 
-            <div class="mb-4">
-              <label class="form-label">Статус</label>
-              <select class="form-select">
-                <option selected>Все проекты</option>
-                <option>Активные</option>
-                <option>На паузе</option>
-                <option>Завершенные</option>
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label class="form-label">Приоритет</label>
-              <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="highPriority"
-                  checked
-                />
-                <label class="form-check-label" for="highPriority"
-                  >Высокий</label
-                >
+            <form method="get" id="filterForm">
+              <div class="mb-4">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                  <option value="">Все проекты</option>
+                  <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Активные</option>
+                  <option value="paused" {% if request.GET.status == 'paused' %}selected{% endif %}>На паузе</option>
+                  <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Завершенные</option>
+                </select>
               </div>
-              <div class="form-check"> 
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="mediumPriority"
-                  checked
-                />
-                <label class="form-check-label" for="mediumPriority"
-                  >Средний</label
-                >
-              </div>
-              <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="lowPriority"
-                  checked
-                />
-                <label class="form-check-label" for="lowPriority">Низкий</label>
-              </div>
-            </div>
 
-            <div class="mb-4">
-              <label class="form-label">Срок</label>
-              <input type="date" class="form-control mb-2" placeholder="От" />
-              <input type="date" class="form-control" placeholder="До" />
-            </div>
+              <div class="mb-4">
+                <label class="form-label">Поиск</label>
+                <input type="text" name="search" class="form-control" placeholder="Название проекта" value="{{ request.GET.search }}" onchange="this.form.submit()">
+              </div>
 
-            <button class="btn btn-primary w-100">
-              <i class="fas fa-filter me-2"></i>Применить
-            </button>
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-filter me-2"></i>Применить
+              </button>
+              
+              {% if request.GET.status or request.GET.search %}
+                <a href="{% url 'projects' %}" class="btn btn-outline-secondary w-100 mt-2">
+                  <i class="fas fa-undo me-2"></i>Сбросить
+                </a>
+              {% endif %}
+            </form>
           </div>
         </div>
 
@@ -323,157 +311,72 @@
             </button>
           </div>
 
-          <!-- Карточки проектов -->
+          <!-- Динамические карточки проектов -->
+          {% if projects %}
           <div class="row mb-4">
+            {% for project in projects %}
             <div class="col-md-4 mb-3">
               <div class="project-card card h-100">
                 <div
                   class="card-header d-flex justify-content-between align-items-center"
                 >
-                  <span>Веб-сайт</span>
-                  <span class="badge bg-light text-dark">Активный</span>
+                  <span>{{ project.name }}</span>
+                  <span class="badge {% if project.status == 'active' %}bg-success{% elif project.status == 'paused' %}bg-warning{% else %}bg-secondary{% endif %}">
+                    {{ project.get_status_display }}
+                  </span>
                 </div>
                 <div class="card-body">
                   <p class="card-text">
-                    Разработка нового корпоративного сайта с адаптивным
-                    дизайном.
+                    {{ project.description|truncatechars:100 }}
                   </p>
                   <div class="d-flex align-items-center mb-3">
                     <div class="me-auto">
                       <small class="text-muted">Прогресс:</small>
                       <div class="progress mt-1" style="height: 6px">
-                        <div class="progress-bar" style="width: 65%"></div>
+                        <div class="progress-bar" style="width: {{ project.progress }}%"></div>
                       </div>
                     </div>
-                    <small class="text-muted">65%</small>
+                    <small class="text-muted">{{ project.progress }}%</small>
                   </div>
                   <div
                     class="d-flex justify-content-between align-items-center"
                   >
                     <div class="avatar-group">
+                      {% for member in project.team_members.all|slice:":3" %}
                       <img
-                        src="https://randomuser.me/api/portraits/men/32.jpg"
+                        src="{% if member.profile.image %}{{ member.profile.image.url }}{% else %}https://ui-avatars.com/api/?name={{ member.profile.display_name|urlencode }}&size=32&background=46344e&color=fff{% endif %}"
                         class="avatar"
-                        title="Иван П."
+                        title="{{ member.profile.display_name }}"
                       />
-                      <img
-                        src="https://randomuser.me/api/portraits/women/44.jpg"
-                        class="avatar"
-                        title="Анна С."
-                      />
-                      <img
-                        src="https://randomuser.me/api/portraits/men/75.jpg"
-                        class="avatar"
-                        title="Петр К."
-                      />
+                      {% endfor %}
+                      {% if project.team_members.count > 3 %}
+                      <span class="avatar bg-secondary text-white text-center d-inline-block" style="line-height: 32px;">+{{ project.team_members.count|add:"-3" }}</span>
+                      {% endif %}
                     </div>
-                    <small class="text-muted">12 задач</small>
+                    <small class="text-muted">{{ project.tasks.count }} задач</small>
                   </div>
                 </div>
                 <div class="card-footer bg-transparent">
-                  <a href="#" class="btn btn-sm btn-outline-primary w-100"
-                    >Открыть</a
-                  >
+                  <a href="{% url 'project_detail' project.id %}" class="btn btn-sm btn-outline-primary w-100">Открыть</a>
                 </div>
               </div>
             </div>
-
-            <div class="col-md-4 mb-3">
-              <div class="project-card card h-100">
-                <div
-                  class="card-header d-flex justify-content-between align-items-center"
-                >
-                  <span>Мобильное приложение</span>
-                  <span class="badge bg-warning text-dark">На паузе</span>
-                </div>
-                <div class="card-body">
-                  <p class="card-text">
-                    Разработка iOS/Android приложения для онлайн-банкинга.
-                  </p>
-                  <div class="d-flex align-items-center mb-3">
-                    <div class="me-auto">
-                      <small class="text-muted">Прогресс:</small>
-                      <div class="progress mt-1" style="height: 6px">
-                        <div class="progress-bar" style="width: 30%"></div>
-                      </div>
-                    </div>
-                    <small class="text-muted">30%</small>
-                  </div>
-                  <div
-                    class="d-flex justify-content-between align-items-center"
-                  >
-                    <div class="avatar-group">
-                      <img
-                        src="https://randomuser.me/api/portraits/women/68.jpg"
-                        class="avatar"
-                        title="Мария Л."
-                      />
-                      <img
-                        src="https://randomuser.me/api/portraits/men/90.jpg"
-                        class="avatar"
-                        title="Алексей В."
-                      />
-                    </div>
-                    <small class="text-muted">8 задач</small>
-                  </div>
-                </div>
-                <div class="card-footer bg-transparent">
-                  <a href="#" class="btn btn-sm btn-outline-primary w-100"
-                    >Открыть</a
-                  >
-                </div>
-              </div>
-            </div>
-
-            <div class="col-md-4 mb-3">
-              <div class="project-card card h-100">
-                <div
-                  class="card-header d-flex justify-content-between align-items-center"
-                >
-                  <span>Брендинг</span>
-                  <span class="badge bg-success">Завершен</span>
-                </div>
-                <div class="card-body">
-                  <p class="card-text">
-                    Разработка фирменного стиля для нового продукта компании.
-                  </p>
-                  <div class="d-flex align-items-center mb-3">
-                    <div class="me-auto">
-                      <small class="text-muted">Прогресс:</small>
-                      <div class="progress mt-1" style="height: 6px">
-                        <div class="progress-bar" style="width: 100%"></div>
-                      </div>
-                    </div>
-                    <small class="text-muted">100%</small>
-                  </div>
-                  <div
-                    class="d-flex justify-content-between align-items-center"
-                  >
-                    <div class="avatar-group">
-                      <img
-                        src="https://randomuser.me/api/portraits/women/44.jpg"
-                        class="avatar"
-                        title="Анна С."
-                      />
-                      <img
-                        src="https://randomuser.me/api/portraits/men/22.jpg"
-                        class="avatar"
-                        title="Дмитрий М."
-                      />
-                    </div>
-                    <small class="text-muted">15 задач</small>
-                  </div>
-                </div>
-                <div class="card-footer bg-transparent">
-                  <a href="#" class="btn btn-sm btn-outline-primary w-100"
-                    >Открыть</a
-                  >
-                </div>
-              </div>
-            </div>
+            {% endfor %}
           </div>
+          {% else %}
+          <!-- Пустое состояние, если нет проектов -->
+          <div class="empty-state">
+            <i class="fas fa-project-diagram"></i>
+            <h4>У вас пока нет проектов</h4>
+            <p>Создайте свой первый проект, нажав на кнопку "Новый проект"</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+              <i class="fas fa-plus me-2"></i>Создать проект
+            </button>
+          </div>
+          {% endif %}
 
-          <!-- Доска задач -->
+          <!-- Доска задач (только если есть проекты) -->
+          {% if projects and active_tasks %}
           <div class="card mb-4">
             <div class="card-header bg-white">
               <h5 class="mb-0">
@@ -488,56 +391,35 @@
                     class="d-flex justify-content-between align-items-center mb-3"
                   >
                     <h6 class="mb-0">К выполнению</h6>
-                    <span class="badge bg-secondary">3</span>
+                    <span class="badge bg-secondary">{{ todo_tasks.count }}</span>
                   </div>
 
-                  <div class="task-card high-priority p-3 mb-3">
+                  {% for task in todo_tasks %}
+                  <div class="task-card {% if task.priority == 'high' %}high-priority{% elif task.priority == 'medium' %}medium-priority{% else %}low-priority{% endif %} p-3 mb-3">
                     <div class="d-flex justify-content-between mb-2">
-                      <h6 class="mb-0">Дизайн главной страницы</h6>
-                      <span class="priority-badge bg-danger">Высокий</span>
+                      <h6 class="mb-0">{{ task.title }}</h6>
+                      <span class="priority-badge {% if task.priority == 'high' %}bg-danger{% elif task.priority == 'medium' %}bg-warning{% else %}bg-success{% endif %}">
+                        {{ task.get_priority_display }}
+                      </span>
                     </div>
-                    <p class="small text-muted mb-2">
-                      Создать макет главной страницы с учетом новых требований
-                    </p>
+                    <p class="small text-muted mb-2">{{ task.description|truncatechars:60 }}</p>
                     <div
                       class="d-flex justify-content-between align-items-center"
                     >
                       <small class="text-muted"
-                        ><i class="far fa-calendar me-1"></i>15 июн</small
-                      >
+                        ><i class="far fa-calendar me-1"></i>{{ task.due_date|date:"d M"|default:"Без срока" }}</small>
+                      {% if task.assigned_to %}
                       <img
-                        src="https://randomuser.me/api/portraits/women/44.jpg"
+                        src="{% if task.assigned_to.profile.image %}{{ task.assigned_to.profile.image.url }}{% else %}https://ui-avatars.com/api/?name={{ task.assigned_to.profile.display_name|urlencode }}&size=32&background=46344e&color=fff{% endif %}"
                         class="avatar"
-                        title="Анна С."
+                        title="{{ task.assigned_to.profile.display_name }}"
                       />
+                      {% endif %}
                     </div>
                   </div>
-
-                  <div class="task-card medium-priority p-3 mb-3">
-                    <div class="d-flex justify-content-between mb-2">
-                      <h6 class="mb-0">API для авторизации</h6>
-                      <span class="priority-badge bg-warning">Средний</span>
-                    </div>
-                    <p class="small text-muted mb-2">
-                      Реализовать endpoints для регистрации и входа
-                    </p>
-                    <div
-                      class="d-flex justify-content-between align-items-center"
-                    >
-                      <small class="text-muted"
-                        ><i class="far fa-calendar me-1"></i>18 июн</small
-                      >
-                      <img
-                        src="https://randomuser.me/api/portraits/men/32.jpg"
-                        class="avatar"
-                        title="Иван П."
-                      />
-                    </div>
-                  </div>
-
-                  <button class="add-task-btn mb-3">
-                    <i class="fas fa-plus me-2"></i>Добавить задачу
-                  </button>
+                  {% empty %}
+                  <p class="text-muted text-center small">Нет задач</p>
+                  {% endfor %}
                 </div>
 
                 <!-- Колонка "В работе" -->
@@ -546,34 +428,35 @@
                     class="d-flex justify-content-between align-items-center mb-3"
                   >
                     <h6 class="mb-0">В работе</h6>
-                    <span class="badge bg-info">2</span>
+                    <span class="badge bg-info">{{ in_progress_tasks.count }}</span>
                   </div>
 
-                  <div class="task-card high-priority p-3 mb-3">
+                  {% for task in in_progress_tasks %}
+                  <div class="task-card {% if task.priority == 'high' %}high-priority{% elif task.priority == 'medium' %}medium-priority{% else %}low-priority{% endif %} p-3 mb-3">
                     <div class="d-flex justify-content-between mb-2">
-                      <h6 class="mb-0">Адаптивная верстка</h6>
-                      <span class="priority-badge bg-danger">Высокий</span>
+                      <h6 class="mb-0">{{ task.title }}</h6>
+                      <span class="priority-badge {% if task.priority == 'high' %}bg-danger{% elif task.priority == 'medium' %}bg-warning{% else %}bg-success{% endif %}">
+                        {{ task.get_priority_display }}
+                      </span>
                     </div>
-                    <p class="small text-muted mb-2">
-                      Адаптировать страницы продукта под мобильные устройства
-                    </p>
+                    <p class="small text-muted mb-2">{{ task.description|truncatechars:60 }}</p>
                     <div
                       class="d-flex justify-content-between align-items-center"
                     >
                       <small class="text-muted"
-                        ><i class="far fa-calendar me-1"></i>10 июн</small
-                      >
+                        ><i class="far fa-calendar me-1"></i>{{ task.due_date|date:"d M"|default:"Без срока" }}</small>
+                      {% if task.assigned_to %}
                       <img
-                        src="https://randomuser.me/api/portraits/men/75.jpg"
+                        src="{% if task.assigned_to.profile.image %}{{ task.assigned_to.profile.image.url }}{% else %}https://ui-avatars.com/api/?name={{ task.assigned_to.profile.display_name|urlencode }}&size=32&background=46344e&color=fff{% endif %}"
                         class="avatar"
-                        title="Петр К."
+                        title="{{ task.assigned_to.profile.display_name }}"
                       />
+                      {% endif %}
                     </div>
                   </div>
-
-                  <button class="add-task-btn mb-3">
-                    <i class="fas fa-plus me-2"></i>Добавить задачу
-                  </button>
+                  {% empty %}
+                  <p class="text-muted text-center small">Нет задач</p>
+                  {% endfor %}
                 </div>
 
                 <!-- Колонка "На проверке" -->
@@ -582,34 +465,35 @@
                     class="d-flex justify-content-between align-items-center mb-3"
                   >
                     <h6 class="mb-0">На проверке</h6>
-                    <span class="badge bg-warning">1</span>
+                    <span class="badge bg-warning">{{ review_tasks.count }}</span>
                   </div>
 
-                  <div class="task-card low-priority p-3 mb-3">
+                  {% for task in review_tasks %}
+                  <div class="task-card {% if task.priority == 'high' %}high-priority{% elif task.priority == 'medium' %}medium-priority{% else %}low-priority{% endif %} p-3 mb-3">
                     <div class="d-flex justify-content-between mb-2">
-                      <h6 class="mb-0">Документация API</h6>
-                      <span class="priority-badge bg-success">Низкий</span>
+                      <h6 class="mb-0">{{ task.title }}</h6>
+                      <span class="priority-badge {% if task.priority == 'high' %}bg-danger{% elif task.priority == 'medium' %}bg-warning{% else %}bg-success{% endif %}">
+                        {{ task.get_priority_display }}
+                      </span>
                     </div>
-                    <p class="small text-muted mb-2">
-                      Обновить документацию для новых endpoints
-                    </p>
+                    <p class="small text-muted mb-2">{{ task.description|truncatechars:60 }}</p>
                     <div
                       class="d-flex justify-content-between align-items-center"
                     >
                       <small class="text-muted"
-                        ><i class="far fa-calendar me-1"></i>20 июн</small
-                      >
+                        ><i class="far fa-calendar me-1"></i>{{ task.due_date|date:"d M"|default:"Без срока" }}</small>
+                      {% if task.assigned_to %}
                       <img
-                        src="https://randomuser.me/api/portraits/women/68.jpg"
+                        src="{% if task.assigned_to.profile.image %}{{ task.assigned_to.profile.image.url }}{% else %}https://ui-avatars.com/api/?name={{ task.assigned_to.profile.display_name|urlencode }}&size=32&background=46344e&color=fff{% endif %}"
                         class="avatar"
-                        title="Мария Л."
+                        title="{{ task.assigned_to.profile.display_name }}"
                       />
+                      {% endif %}
                     </div>
                   </div>
-
-                  <button class="add-task-btn mb-3">
-                    <i class="fas fa-plus me-2"></i>Добавить задачу
-                  </button>
+                  {% empty %}
+                  <p class="text-muted text-center small">Нет задач</p>
+                  {% endfor %}
                 </div>
 
                 <!-- Колонка "Завершено" -->
@@ -618,40 +502,74 @@
                     class="d-flex justify-content-between align-items-center mb-3"
                   >
                     <h6 class="mb-0">Завершено</h6>
-                    <span class="badge bg-success">4</span>
+                    <span class="badge bg-success">{{ completed_tasks.count }}</span>
                   </div>
 
+                  {% for task in completed_tasks %}
                   <div class="task-card p-3 mb-3 opacity-75">
                     <div class="d-flex justify-content-between mb-2">
-                      <h6 class="mb-0">Дизайн логотипа</h6>
-                      <span class="priority-badge bg-success">Низкий</span>
+                      <h6 class="mb-0">{{ task.title }}</h6>
+                      <span class="priority-badge {% if task.priority == 'high' %}bg-danger{% elif task.priority == 'medium' %}bg-warning{% else %}bg-success{% endif %}">
+                        {{ task.get_priority_display }}
+                      </span>
                     </div>
-                    <p class="small text-muted mb-2">
-                      Варианты логотипа для нового продукта
-                    </p>
+                    <p class="small text-muted mb-2">{{ task.description|truncatechars:60 }}</p>
                     <div
                       class="d-flex justify-content-between align-items-center"
                     >
                       <small class="text-muted"
-                        ><i class="far fa-calendar me-1"></i>5 июн</small
-                      >
+                        ><i class="far fa-calendar me-1"></i>{{ task.due_date|date:"d M"|default:"Без срока" }}</small>
+                      {% if task.assigned_to %}
                       <img
-                        src="https://randomuser.me/api/portraits/men/22.jpg"
+                        src="{% if task.assigned_to.profile.image %}{{ task.assigned_to.profile.image.url }}{% else %}https://ui-avatars.com/api/?name={{ task.assigned_to.profile.display_name|urlencode }}&size=32&background=46344e&color=fff{% endif %}"
                         class="avatar"
-                        title="Дмитрий М."
+                        title="{{ task.assigned_to.profile.display_name }}"
                       />
+                      {% endif %}
                     </div>
                   </div>
+                  {% empty %}
+                  <p class="text-muted text-center small">Нет задач</p>
+                  {% endfor %}
                 </div>
               </div>
             </div>
           </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно создания проекта -->
+    <div class="modal fade" id="newProjectModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Новый проект</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <form method="post" action="{% url 'create_project' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Название проекта</label>
+                <input type="text" name="name" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea name="description" class="form-control" rows="3"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+              <button type="submit" class="btn btn-primary">Создать</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
 
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
   </body>
-</html>
+</html> 
