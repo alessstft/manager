@@ -100,6 +100,7 @@
         <li class="nav-item"><a class="nav-link" href="/index/"><i class="fas fa-home me-1"></i>Главная</a></li>
         <li class="nav-item"><a class="nav-link" href="/projects/"><i class="fas fa-project-diagram me-1"></i>Проекты</a></li>
         <li class="nav-item"><a class="nav-link active" href="/tasks/"><i class="fas fa-tasks me-1"></i>Задачи</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'workload' %}"><i class="fas fa-chart-column me-1"></i>Нагрузка</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
             <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode }}&size=64&background=46344e&color=fff" class="avatar me-1"/>
@@ -108,7 +109,11 @@
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Профиль</a></li>
             <li><hr class="dropdown-divider"/></li>
-            <li><a class="dropdown-item" href="/logout/"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+            <li>
+              <form action="{% url 'logout' %}" method="post" class="m-0">{% csrf_token %}
+                <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Выход</button>
+              </form>
+            </li>
           </ul>
         </li>
       </ul>

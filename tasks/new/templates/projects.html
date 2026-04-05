@@ -50,6 +50,9 @@
             <li class="nav-item">
               <a class="nav-link" href="{% url 'tasks' %}"><i class="fas fa-tasks me-1"></i>Задачи</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'workload' %}"><i class="fas fa-chart-column me-1"></i>Нагрузка</a>
+            </li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                 {% if user.profile.image %}
@@ -65,7 +68,11 @@
                 <li><a class="dropdown-item" href="{% url 'admin_create_employee' %}"><i class="fas fa-user-plus me-2"></i>Новый сотрудник</a></li>
                 {% endif %}
                 <li><hr class="dropdown-divider" /></li>
-                <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+                <li>
+                  <form action="{% url 'logout' %}" method="post" class="m-0">{% csrf_token %}
+                    <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Выход</button>
+                  </form>
+                </li>
               </ul>
             </li>
           </ul>
@@ -220,7 +227,7 @@
                             </select>
                           </div>
                           <div class="mb-3">
-                            <label class="form-label">Исполнитель</label>
+                            <label class="form-label">Исполнитель проекта</label>
                             <select name="assigned_to" class="form-select">
                               <option value="">— Не назначен —</option>
                               {% for u in all_users %}
@@ -229,6 +236,7 @@
                                 </option>
                               {% endfor %}
                             </select>
+                            <div class="form-text">Исполнитель добавляется в участники и видит проект.</div>
                           </div>
 
                         </div>
@@ -317,13 +325,14 @@
                 </select>
               </div>
               <div class="mb-3">
-                <label class="form-label">Исполнитель</label>
+                <label class="form-label">Исполнитель проекта</label>
                 <select name="assigned_to" class="form-select">
                   <option value="">— Не назначен —</option>
                   {% for u in all_users %}
                     <option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>
                   {% endfor %}
                 </select>
+                <div class="form-text">Сотрудник будет добавлен в участники проекта и увидит его в списке.</div>
               </div>
 
             </div>

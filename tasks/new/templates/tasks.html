@@ -1,1451 +1,251 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Мои задачи</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <style>
-        :root {
-            --primary-color: #46344e;
-            --secondary-color: #9b786f;
-            --accent-color: #d2632b;
-            --dark-color: #2b2d42;
-            --text-color: #333;
-        }
-        body { 
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f5f7fa; 
-            color: var(--dark-color); 
-        }
-        .task-header { 
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); 
-            color: white; 
-            border-radius: 10px 10px 0 0; 
-            padding: 20px; 
-        }
-        .task-container { 
-            background-color: white; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
-        }
-        .task-card { 
-            border-left: 4px solid var(--accent-color); 
-            border-radius: 8px; 
-            transition: all 0.2s ease; 
-            margin-bottom: 15px;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .task-card:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); 
-        }
-        .task-card.prio-low    { border-left-color: #198754; }
-        .task-card.prio-medium { border-left-color: #ffc107; }
-        .task-card.prio-high   { border-left-color: #dc3545; }
-        .priority-badge, .status-badge { 
-            font-size: 0.75rem; 
-            padding: 4px 8px; 
-            border-radius: 10px; 
-            font-weight: 500; 
-        }
-        .avatar { 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            border: 2px solid white; 
-        }
-        .task-detail-item { margin-bottom: 15px; }
-        .task-detail-label { 
-            font-weight: 600; 
-            color: #6c757d; 
-            margin-bottom: 5px; 
-        }
-        .task-tabs .nav-link { 
-            color: #495057; 
-            font-weight: 500; 
-            border: none; 
-            padding: 10px 20px; 
-        }
-        .task-tabs .nav-link.active { 
-            color: var(--primary-color); 
-            border-bottom: 2px solid var(--primary-color);
-            background: transparent;
-        }
-        .file-attachment { 
-            display: flex; 
-            align-items: center; 
-            padding: 10px; 
-            border: 1px solid #dee2e6; 
-            border-radius: 6px; 
-            margin-bottom: 10px; 
-        }
-        .file-icon { 
-            font-size: 1.5rem; 
-            margin-right: 10px; 
-            color: #6c757d; 
-        }
-        /* === Заблокированные поля для обычного пользователя === */
-        .disabled-field {
-            background-color: #f8f9fa !important;
-            cursor: not-allowed !important;
-            opacity: 0.7;
-        }
-        /* === Метка роли === */
-        .role-badge {
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-weight: 600;
-            letter-spacing: 0.03em;
-        }
-        /* === Кружок прогресса === */
-        .progress-circle-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        .progress-circle {
-            position: relative;
-            width: 80px;
-            height: 80px;
-        }
-        .progress-circle svg {
-            transform: rotate(-90deg);
-        }
-        .progress-circle .bg-track {
-            fill: none;
-            stroke: #e9ecef;
-            stroke-width: 7;
-        }
-        .progress-circle .progress-track {
-            fill: none;
-            stroke: var(--accent-color);
-            stroke-width: 7;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.4s ease;
-        }
-        .progress-circle .circle-text {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-        /* === Комментарии === */
-        .comment-card {
-            border-left: 3px solid var(--accent-color);
-            border-radius: 6px;
-            background: #fafafa;
-            padding: 12px 14px;
-            margin-bottom: 12px;
-        }
-        .comment-card .comment-meta {
-            font-size: 0.8rem;
-            color: #6c757d;
-            margin-bottom: 4px;
-        }
-        /* === История === */
-        .history-item {
-            display: flex;
-            gap: 12px;
-            padding-bottom: 12px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .history-icon {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: #f0edf3;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--primary-color);
-            flex-shrink: 0;
-            font-size: 0.85rem;
-        }
-        /* === Связанные задачи === */
-        .related-task-card {
-            cursor: pointer;
-            border-left: 4px solid var(--accent-color);
-            border-radius: 8px;
-            background: #fff;
-            padding: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: all 0.2s;
-            margin-bottom: 12px;
-        }
-        .related-task-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-        }
-        .related-task-card.prio-low    { border-left-color: #198754; }
-        .related-task-card.prio-medium { border-left-color: #ffc107; }
-        .related-task-card.prio-high   { border-left-color: #dc3545; }
-        /* Мини-прогресс бар */
-        .mini-progress { height: 4px; border-radius: 2px; background: #e9ecef; margin-top: 6px; }
-        .mini-progress-bar { height: 100%; border-radius: 2px; background: var(--accent-color); transition: width 0.3s; }
-        /* Статус кнопка в шапке */
-        .header-status-btn {
-            display: flex; align-items: center; gap: 8px;
-        }
-        .status-dot {
-            width: 8px; height: 8px; border-radius: 50%;
-        }
-        /* Уведомление о правах */
-        .access-notice {
-            background: #fff8e1;
-            border: 1px solid #ffe082;
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 0.85rem;
-            color: #795548;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        /* Кнопка сохранить прогресс */
-        .btn-save-progress {
-            background: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 8px 20px;
-            font-weight: 500;
-        }
-        .btn-save-progress:hover {
-            background: #b8521f;
-            color: white;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Задачи</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary-color: #46344e;
+      --secondary-color: #9b786f;
+      --accent-color: #d2632b;
+    }
+    body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2b2d42; }
+    .navbar-brand { font-weight: 700; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
+    .task-card {
+      border: none;
+      border-radius: 10px;
+      border-left: 4px solid var(--accent-color);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: #fff;
+    }
+    .task-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+    .task-card.prio-low { border-left-color: #198754; }
+    .task-card.prio-medium { border-left-color: #ffc107; }
+    .task-card.prio-high { border-left-color: #dc3545; }
+    .filter-panel { background: #fff; border-radius: 10px; padding: 1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .mini-progress { height: 6px; border-radius: 3px; background: #e9ecef; overflow: hidden; }
+    .mini-progress-bar { height: 100%; background: var(--accent-color); border-radius: 3px; }
+  </style>
 </head>
-<!--
-    НАСТРОЙКА РОЛИ:
-    Измени data-role="admin" на data-role="employee" чтобы проверить вид обычного сотрудника.
-    В реальном проекте это значение подставляет Django: data-role="{{ user.profile.role }}"
-    
-    Аналогично data-username — имя текущего пользователя из Django: {{ user.get_full_name }}
--->
-<body data-role="{{ user.profile.role|lower|default:'employee' }}" 
-      data-username="{{ user.get_full_name|default:user.username }}">
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'index' %}"><i class="fas fa-project-diagram me-2"></i>МыМыМы</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="{% url 'index' %}"><i class="fas fa-home me-1"></i>Главная</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'projects' %}"><i class="fas fa-folder-open me-1"></i>Проекты</a></li>
+          <li class="nav-item"><a class="nav-link active" href="{% url 'tasks' %}"><i class="fas fa-tasks me-1"></i>Задачи</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'workload' %}"><i class="fas fa-chart-column me-1"></i>Нагрузка</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+              {% if user.profile.image %}
+                <img src="{{ user.profile.image.url }}" alt="" class="avatar me-1" />
+              {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ user.profile.display_name|urlencode }}&size=64&background=46344e&color=fff" alt="" class="avatar me-1" />
+              {% endif %}
+              {{ user.profile.display_name }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Профиль</a></li>
+              {% if is_admin %}
+              <li><a class="dropdown-item" href="{% url 'admin_create_employee' %}"><i class="fas fa-user-plus me-2"></i>Новый сотрудник</a></li>
+              {% endif %}
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <form action="{% url 'logout' %}" method="post" class="m-0">{% csrf_token %}
+                  <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Выход</button>
+                </form>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-    <!-- ═══════════════════════════════ NAVBAR ═══════════════════════════════ -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#"><i class="fas fa-project-diagram me-2"></i>И тут мы</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/index/"><i class="fas fa-home me-1"></i>Главная</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/projects/"><i class="fas fa-project-diagram me-1"></i>Проекты</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/tasks/"><i class="fas fa-tasks me-1"></i>Задачи</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <!-- Аватар и имя пользователя — подставляется из data-username -->
-                            <img id="navAvatar" src="" class="avatar me-1" alt="" style="display:none"/>
-                            <span id="navUsername">—</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Профиль</a></li>
-                            <li><hr class="dropdown-divider" /></li>
-                            <li><a class="dropdown-item" href="/logout/">
-                                <i class="fas fa-sign-out-alt me-2"></i>Выход</a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
+  <div class="container py-4">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    </nav>
+      {% endfor %}
+    {% endif %}
 
-    <!-- ═══════════════════════════════ MAIN ═══════════════════════════════ -->
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0"><i class="fas fa-tasks me-2"></i>Мои задачи</h2>
-            <div>
-                <!-- Кнопка "Новая задача" — только для администратора -->
-                <button class="btn btn-primary me-2 admin-only" id="btnNewTask"
-                    data-bs-toggle="modal" data-bs-target="#newTaskModal">
-                    <i class="fas fa-plus me-2"></i>Новая задача
-                </button>
-                <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#filterModal">
-                    <i class="fas fa-filter me-2"></i>Фильтры
-                </button>
-            </div>
-        </div>
-
-        <!-- ─── КАРТОЧКА ЗАДАЧИ ─── -->
-        <div class="task-container">
-            <div class="task-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="mb-0 text-white">Разработка API для авторизации пользователей</h4>
-                    <p class="mb-0 text-white-50">Проект: Веб-сайт компании</p>
-                </div>
-                <!-- Кружок прогресса в шапке -->
-                <div class="d-flex align-items-center gap-3">
-                    <div class="progress-circle" id="headerProgressCircle" title="Прогресс выполнения">
-                        <svg width="80" height="80" viewBox="0 0 80 80">
-                            <circle class="bg-track" cx="40" cy="40" r="33"/>
-                            <circle class="progress-track" id="headerCirclePath" cx="40" cy="40" r="33"
-                                stroke-dasharray="207.3"
-                                stroke-dashoffset="207.3"/>
-                        </svg>
-                        <div class="circle-text"><span id="headerCircleVal">0</span>%</div>
-                    </div>
-                    <span class="status-badge bg-light text-dark header-status-btn">
-                        <span class="status-dot bg-info"></span>В работе
-                    </span>
-                </div>
-            </div>
-
-            <div class="p-4">
-                <div class="row">
-                    <!-- ────────── ЛЕВАЯ КОЛОНКА: вкладки ────────── -->
-                    <div class="col-lg-8">
-                        <ul class="nav task-tabs mb-4">
-                            <li class="nav-item"><a class="nav-link active" href="#details" data-bs-toggle="tab">Детали</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#comments" data-bs-toggle="tab">Комментарии <span class="badge bg-secondary ms-1" id="commentCount">0</span></a></li>
-                            <li class="nav-item"><a class="nav-link" href="#history" data-bs-toggle="tab">История</a></li>
-                        </ul>
-
-                        <div class="tab-content">
-                            <!-- ═══ ДЕТАЛИ ═══ -->
-                            <div class="tab-pane fade show active" id="details">
-                                <div class="mb-4">
-                                    <h5>Описание задачи</h5>
-                                    <p>Необходимо разработать API endpoints для регистрации новых пользователей, входа в систему и обновления профиля. API должно поддерживать JWT-аутентификацию и валидацию входных данных.</p>
-                                    <p>Требования:</p>
-                                    <ul>
-                                        <li>Регистрация с email и паролем</li>
-                                        <li>Вход с email/паролем</li>
-                                        <li>Обновление токена</li>
-                                        <li>Валидация входных данных</li>
-                                        <li>Документирование с помощью Swagger</li>
-                                    </ul>
-                                </div>
-
-                                <!-- Связанные задачи в деталях (ссылки) -->
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="task-detail-item">
-                                            <div class="task-detail-label">Связанные задачи</div>
-                                            <div id="relatedLinksInDetails">
-                                                <a href="#relatedSection" class="d-block text-decoration-none mb-2">
-                                                    <i class="fas fa-link me-2 text-muted"></i>Документирование API
-                                                </a>
-                                                <a href="#relatedSection" class="d-block text-decoration-none">
-                                                    <i class="fas fa-link me-2 text-muted"></i>Фронтенд для авторизации
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Файлы -->
-                                <div class="mt-4">
-                                    <h5 class="mb-3"><i class="fas fa-paperclip me-2"></i>Файлы</h5>
-                                    <div class="d-flex align-items-center mb-3">
-                                        <!-- Кнопка загрузки — только для администратора -->
-                                        <button class="btn btn-primary me-3 admin-only" id="btnUpload"
-                                            data-bs-toggle="modal" data-bs-target="#uploadFileModal">
-                                            <i class="fas fa-upload me-2"></i>Загрузить файл
-                                        </button>
-                                        <div class="text-muted small">Максимальный размер: 25MB</div>
-                                    </div>
-                                    <div class="file-attachment">
-                                        <div class="file-icon"><i class="fas fa-file-pdf"></i></div>
-                                        <div class="flex-grow-1">
-                                            <strong>Требования к API.pdf</strong>
-                                            <div class="text-muted small">Загружено: Анна С., 12 июня • 256 KB</div>
-                                        </div>
-                                        <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i></button>
-                                    </div>
-                                    <div class="file-attachment">
-                                        <div class="file-icon"><i class="fas fa-file-code"></i></div>
-                                        <div class="flex-grow-1">
-                                            <strong>Пример запроса.json</strong>
-                                            <div class="text-muted small">Загружено: Петр К., 10 июня • 12 KB</div>
-                                        </div>
-                                        <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ═══ КОММЕНТАРИИ ═══ -->
-                            <div class="tab-pane fade" id="comments">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Написать комментарий</label>
-                                    <textarea id="commentInput" class="form-control mb-2" rows="3"
-                                        placeholder="Введите комментарий..."></textarea>
-                                    <button class="btn btn-primary btn-sm" onclick="addComment()">
-                                        <i class="fas fa-paper-plane me-2"></i>Отправить
-                                    </button>
-                                </div>
-                                <hr/>
-                                <div id="commentsList">
-                                    <!-- Первый комментарий — пример -->
-                                    <div class="comment-card">
-                                        <div class="comment-meta">
-                                            <strong>Петр К.</strong> · Вчера, 15:30
-                                        </div>
-                                        <p class="mb-0">Для JWT-аутентификации предлагаю использовать библиотеку django-rest-framework-simplejwt. Она уже интегрирована в наш проект.</p>
-                                    </div>
-                                </div>
-                                <p class="text-muted small" id="noCommentsMsg" style="display:none">Комментариев пока нет.</p>
-                            </div>
-
-                            <!-- ═══ ИСТОРИЯ ═══ -->
-                            <div class="tab-pane fade" id="history">
-                                <div id="historyList">
-                                    <div class="history-item">
-                                        <div class="history-icon"><i class="fas fa-plus"></i></div>
-                                        <div>
-                                            <strong>Анна С.</strong> создала задачу
-                                            <div class="text-muted small">15 июня, 09:30</div>
-                                        </div>
-                                    </div>
-                                    <div class="history-item">
-                                        <div class="history-icon"><i class="fas fa-user-tag"></i></div>
-                                        <div>
-                                            <strong>Анна С.</strong> назначила исполнителя: <strong>Иван П.</strong>
-                                            <div class="text-muted small">Вчера, 16:45</div>
-                                        </div>
-                                    </div>
-                                    <div class="history-item">
-                                        <div class="history-icon"><i class="fas fa-exchange-alt"></i></div>
-                                        <div>
-                                            <strong>Анна С.</strong> изменила статус: К выполнению → <span class="badge bg-info text-dark">В работе</span>
-                                            <div class="text-muted small">Сегодня, 10:15</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ────────── ПРАВАЯ КОЛОНКА: информация о задаче ────────── -->
-                    <div class="col-lg-4">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title mb-3">Информация о задаче</h5>
-
-                                <!-- Уведомление для обычного сотрудника -->
-                                <div class="access-notice" id="employeeNotice" style="display:none">
-                                    <i class="fas fa-info-circle"></i>
-                                    Вы можете обновить только прогресс выполнения.
-                                </div>
-
-                                <div class="task-detail-item">
-                                    <div class="task-detail-label">Название задачи</div>
-                                    <input type="text" id="taskTitle" class="form-control form-control-sm"
-                                        value="Разработка API для авторизации пользователей">
-                                </div>
-
-                                <div class="task-detail-item">
-                                    <div class="task-detail-label">Проект</div>
-                                    <input type="text" id="projectName" class="form-control form-control-sm"
-                                        value="Веб-сайт компании">
-                                </div>
-
-                                <!-- Исполнитель — назначает только администратор -->
-                                <div class="task-detail-item">
-                                    <div class="task-detail-label">Исполнитель</div>
-                                    <select id="executorSelect" class="form-select form-select-sm">
-                                        <option value="">Не назначен</option>
-                                        <option value="ivan" selected>Иван П. (Backend разработчик)</option>
-                                        <option value="alesya">Алеся А. (Frontend)</option>
-                                        <option value="petr">Петр К. (Fullstack)</option>
-                                    </select>
-                                </div>
-
-                                <div class="task-detail-item">
-                                    <div class="task-detail-label">Статус</div>
-                                    <select id="statusSelect" class="form-select form-select-sm">
-                                        <option value="todo">К выполнению</option>
-                                        <option value="in_progress" selected>В работе</option>
-                                        <option value="review">На проверке</option>
-                                        <option value="done">Готово</option>
-                                    </select>
-                                </div>
-
-                                <div class="task-detail-item">
-                                    <div class="task-detail-label">Приоритет</div>
-                                    <select id="prioritySelect" class="form-select form-select-sm">
-                                        <option value="low">Низкий</option>
-                                        <option value="medium" selected>Средний</option>
-                                        <option value="high">Высокий</option>
-                                    </select>
-                                </div>
-
-                                <div class="task-detail-item">
-                                    <div class="task-detail-label">Срок выполнения</div>
-                                    <input type="date" id="deadline" class="form-control form-control-sm" value="2026-06-25">
-                                </div>
-
-                                <hr class="my-3"/>
-
-                                <!-- ═══ ПРОГРЕСС — доступен всем ═══ -->
-                                <div class="task-detail-item">
-                                    <div class="task-detail-label mb-2">Прогресс выполнения</div>
-                                    <div class="progress-circle-wrapper">
-                                        <div class="progress-circle">
-                                            <svg width="80" height="80" viewBox="0 0 80 80">
-                                                <circle class="bg-track" cx="40" cy="40" r="33"/>
-                                                <circle class="progress-track" id="sideCirclePath" cx="40" cy="40" r="33"
-                                                    stroke-dasharray="207.3"
-                                                    stroke-dashoffset="207.3"/>
-                                            </svg>
-                                            <div class="circle-text"><span id="sideCircleVal">0</span>%</div>
-                                        </div>
-                                        <input type="range" class="form-range w-100" min="0" max="100" value="45" id="progressRange">
-                                        <div class="d-flex justify-content-between w-100">
-                                            <small class="text-muted">0%</small>
-                                            <strong><span id="progressValue">45</span>%</strong>
-                                            <small class="text-muted">100%</small>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="d-grid gap-2 mt-3">
-                                    <!-- Сохранить прогресс — доступно всем -->
-                                    <button class="btn-save-progress btn" onclick="saveProgress()">
-                                        <i class="fas fa-chart-line me-2"></i>Сохранить прогресс
-                                    </button>
-                                    <!-- Полное сохранение — только администратор -->
-                                    <button class="btn btn-primary admin-only" id="btnSaveAll" onclick="saveTask()">
-                                        <i class="far fa-save me-2"></i>Сохранить все изменения
-                                    </button>
-                                    <!-- Удалить — только администратор -->
-                                    <button class="btn btn-outline-danger admin-only" id="btnDelete" onclick="deleteTask()">
-                                        <i class="far fa-trash-alt me-2"></i>Удалить задачу
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- /правая колонка -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ═══════════ СПИСОК ЗАДАЧ (для фильтра и новых задач) ═══════════ -->
-        <div class="mt-4" id="taskListSection">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Все задачи проекта</h5>
-                <span class="text-muted small" id="taskListCount"></span>
-            </div>
-            <div id="taskListContainer">
-                <!-- задачи рендерятся JS-ом -->
-            </div>
-            <p class="text-muted small" id="noTasksMsg" style="display:none">
-                <i class="fas fa-search me-1"></i>Нет задач, подходящих под фильтр.
-            </p>
-        </div>
-
-        <!-- ═══════════ СВЯЗАННЫЕ ЗАДАЧИ (функциональный блок) ═══════════ -->
-        <div class="mt-4" id="relatedSection">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0"><i class="fas fa-link me-2"></i>Связанные задачи</h5>
-                <!-- Кнопка добавить связь — только администратор -->
-                <button class="btn btn-sm btn-outline-secondary admin-only" data-bs-toggle="modal" data-bs-target="#addRelatedModal">
-                    <i class="fas fa-plus me-1"></i>Добавить связь
-                </button>
-            </div>
-
-            <div class="row" id="relatedTasksContainer">
-                <!-- Задача 1 -->
-                <div class="col-md-4" id="related-1">
-                    <div class="related-task-card prio-low" onclick="openRelatedTask(1)">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="mb-0">Документирование API</h6>
-                            <span class="priority-badge text-white" style="background:#198754">Низкий</span>
-                        </div>
-                        <p class="small text-muted mb-2">Создать Swagger-документацию для новых endpoints</p>
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="status-badge bg-secondary text-white">К выполнению</span>
-                            <small class="text-muted"><i class="far fa-calendar me-1"></i>30 июн</small>
-                        </div>
-                        <div class="mini-progress">
-                            <div class="mini-progress-bar" style="width:0%"></div>
-                        </div>
-                        <div class="d-flex justify-content-between mt-1">
-                            <small class="text-muted">Прогресс: 0%</small>
-                            <!-- Кнопка удалить связь — только администратор -->
-                            <button class="btn btn-link btn-sm text-danger p-0 admin-only"
-                                onclick="event.stopPropagation(); removeRelated(1)"
-                                title="Удалить связь">
-                                <i class="fas fa-unlink fa-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Задача 2 -->
-                <div class="col-md-4" id="related-2">
-                    <div class="related-task-card prio-medium" onclick="openRelatedTask(2)">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="mb-0">Фронтенд для авторизации</h6>
-                            <span class="priority-badge text-dark" style="background:#ffc107">Средний</span>
-                        </div>
-                        <p class="small text-muted mb-2">Реализовать формы входа и регистрации</p>
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="status-badge text-dark" style="background:#0dcaf0">В работе</span>
-                            <small class="text-muted"><i class="far fa-calendar me-1"></i>28 июн</small>
-                        </div>
-                        <div class="mini-progress">
-                            <div class="mini-progress-bar" style="width:30%"></div>
-                        </div>
-                        <div class="d-flex justify-content-between mt-1">
-                            <small class="text-muted">Прогресс: 30%</small>
-                            <button class="btn btn-link btn-sm text-danger p-0 admin-only"
-                                onclick="event.stopPropagation(); removeRelated(2)"
-                                title="Удалить связь">
-                                <i class="fas fa-unlink fa-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <p class="text-muted small" id="noRelatedMsg" style="display:none">Связанных задач нет.</p>
-        </div>
-    </div><!-- /container -->
-
-    <!-- ═══════════ МОДАЛ: добавить связанную задачу ═══════════ -->
-    <div class="modal fade" id="addRelatedModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-link me-2"></i>Добавить связанную задачу</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Задача</label>
-                        <select id="relatedTaskSelect" class="form-select">
-                            <option value="">— выберите задачу —</option>
-                            <option value="3" data-title="Тестирование API" data-prio="high" data-prio-label="Высокий" data-status="todo" data-status-label="К выполнению" data-desc="Написать тесты для всех endpoints" data-date="5 июл" data-progress="0">
-                                Тестирование API
-                            </option>
-                            <option value="4" data-title="Деплой на сервер" data-prio="medium" data-prio-label="Средний" data-status="todo" data-status-label="К выполнению" data-desc="Настроить CI/CD и задеплоить приложение" data-date="10 июл" data-progress="0">
-                                Деплой на сервер
-                            </option>
-                            <option value="5" data-title="Ревью кода" data-prio="low" data-prio-label="Низкий" data-status="review" data-status-label="На проверке" data-desc="Провести code review backend-части" data-date="2 июл" data-progress="80">
-                                Ревью кода
-                            </option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="addRelatedTask()">Добавить</button>
-                </div>
-            </div>
-        </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+      <h1 class="h3 mb-0"><i class="fas fa-tasks me-2"></i>Задачи</h1>
+      {% if is_admin %}
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTaskModal">
+        <i class="fas fa-plus me-2"></i>Новая задача
+      </button>
+      {% endif %}
     </div>
 
-    <!-- ═══════════ МОДАЛ: детали связанной задачи ═══════════ -->
-    <div class="modal fade" id="relatedDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header" style="background:linear-gradient(135deg,#46344e,#9b786f)">
-                    <h5 class="modal-title text-white" id="relatedModalTitle">—</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <p id="relatedModalDesc" class="text-muted"></p>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="task-detail-item">
-                                <div class="task-detail-label">Статус</div>
-                                <div id="relatedModalStatus"></div>
-                            </div>
-                            <div class="task-detail-item">
-                                <div class="task-detail-label">Приоритет</div>
-                                <div id="relatedModalPriority"></div>
-                            </div>
-                            <div class="task-detail-item">
-                                <div class="task-detail-label">Срок</div>
-                                <div id="relatedModalDate"></div>
-                            </div>
-                            <div class="task-detail-item">
-                                <div class="task-detail-label">Прогресс</div>
-                                <div class="mini-progress"><div class="mini-progress-bar" id="relatedModalProgressBar" style="width:0%"></div></div>
-                                <small class="text-muted" id="relatedModalProgressVal"></small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                    <button type="button" class="btn btn-primary" onclick="goToRelatedTask()">
-                        <i class="fas fa-external-link-alt me-2"></i>Открыть задачу
-                    </button>
-                </div>
-            </div>
+    <div class="filter-panel mb-4">
+      <form method="get" action="{% url 'tasks' %}" class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label small text-muted mb-0">Статус</label>
+          <select name="status" class="form-select form-select-sm">
+            <option value="">Все</option>
+            {% for val, label in status_choices %}
+              <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
         </div>
+        <div class="col-md-3">
+          <label class="form-label small text-muted mb-0">Приоритет</label>
+          <select name="priority" class="form-select form-select-sm">
+            <option value="">Все</option>
+            {% for val, label in priority_choices %}
+              <option value="{{ val }}" {% if current_priority == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small text-muted mb-0">Проект</label>
+          <select name="project" class="form-select form-select-sm">
+            <option value="">Все проекты</option>
+            {% for p in projects %}
+              <option value="{{ p.pk }}" {% if current_project_id == p.pk %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+          <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="fas fa-filter"></i></button>
+          <a href="{% url 'tasks' %}" class="btn btn-outline-secondary btn-sm" title="Сбросить"><i class="fas fa-times"></i></a>
+        </div>
+      </form>
     </div>
 
-    <!-- ═══════════ TOAST-уведомление ═══════════ -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
-        <div id="appToast" class="toast align-items-center text-white border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body" id="toastMsg">—</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    {% if tasks %}
+      <p class="text-muted small mb-3">Всего: {{ tasks|length }}</p>
+      {% for task in tasks %}
+        <div class="card task-card prio-{{ task.priority }} mb-3">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-lg-8">
+                <a href="{% url 'task_detail' task.id %}" class="h5 mb-2 text-decoration-none text-dark d-inline-block">{{ task.title }}</a>
+                {% if task.description %}
+                  <p class="text-muted small mb-2 mb-lg-0">{{ task.description|truncatechars:200 }}</p>
+                {% endif %}
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <span class="badge bg-{{ task.status_color }}">{{ task.get_status_display }}</span>
+                  <span class="badge bg-light text-dark border">{{ task.get_priority_display }}</span>
+                  <span class="text-muted small"><i class="fas fa-folder me-1"></i>{{ task.project.name }}</span>
+                  {% if task.assigned_to %}
+                    <span class="text-muted small"><i class="fas fa-user me-1"></i>{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</span>
+                  {% else %}
+                    <span class="text-muted small"><i class="fas fa-user me-1"></i>Не назначена</span>
+                  {% endif %}
+                  {% if task.due_date %}
+                    <span class="text-muted small"><i class="far fa-calendar me-1"></i>{{ task.due_date|date:"d.m.Y" }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-lg-4 mt-3 mt-lg-0 text-lg-end">
+                <div class="fw-bold text-primary mb-1">{{ task.progress }}%</div>
+                <div class="mini-progress ms-lg-auto" style="max-width: 140px; margin-left: auto;">
+                  <div class="mini-progress-bar" style="width: {{ task.progress }}%"></div>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
+      {% endfor %}
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-clipboard-list fa-3x mb-3 opacity-25"></i>
+        <p class="mb-2">Задач пока нет.</p>
+        {% if is_admin %}
+          <p class="small">Создайте задачу кнопкой «Новая задача» и назначьте исполнителя.</p>
+        {% else %}
+          <p class="small">Ожидайте назначения задач администратором.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if is_admin %}
+  <div class="modal fade" id="newTaskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form method="post" action="{% url 'tasks' %}">
+          {% csrf_token %}
+          <div class="modal-header" style="background:linear-gradient(135deg,#46344e,#9b786f)">
+            <h5 class="modal-title text-white"><i class="fas fa-plus me-2"></i>Новая задача</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Название <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control" required maxlength="200" placeholder="Что нужно сделать?" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Описание</label>
+              <textarea name="description" class="form-control" rows="3" placeholder="Подробности"></textarea>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Проект <span class="text-danger">*</span></label>
+                <select name="project" class="form-select" required>
+                  <option value="">— выберите проект —</option>
+                  {% for p in projects %}
+                    <option value="{{ p.pk }}">{{ p.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Исполнитель</label>
+                <select name="assigned_to" class="form-select">
+                  <option value="">Не назначен</option>
+                  {% for u in all_users %}
+                    <option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Статус</label>
+                <select name="status" class="form-select">
+                  {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if val == 'todo' %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Приоритет</label>
+                <select name="priority" class="form-select">
+                  {% for val, label in priority_choices %}
+                    <option value="{{ val }}" {% if val == 'medium' %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Срок</label>
+                <input type="date" name="due_date" class="form-control" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Создать</button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
+  {% endif %}
 
-    <!-- ═══════════ МОДАЛ: Новая задача (только для администратора) ═══════════ -->
-    <div class="modal fade" id="newTaskModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header" style="background:linear-gradient(135deg,#46344e,#9b786f)">
-                    <h5 class="modal-title text-white"><i class="fas fa-plus me-2"></i>Новая задача</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Название задачи <span class="text-danger">*</span></label>
-                            <input type="text" id="newTaskTitle" class="form-control" placeholder="Что нужно сделать?">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Описание</label>
-                            <textarea id="newTaskDesc" class="form-control" rows="3" placeholder="Подробное описание..."></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Проект</label>
-                            <input type="text" id="newTaskProject" class="form-control" value="Веб-сайт компании">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Исполнитель</label>
-                            <select id="newTaskExecutor" class="form-select">
-                                <option value="">Не назначен</option>
-                                <option value="ivan">Иван П. (Backend разработчик)</option>
-                                <option value="alesya">Алеся А. (Frontend)</option>
-                                <option value="petr">Петр К. (Fullstack)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Статус</label>
-                            <select id="newTaskStatus" class="form-select">
-                                <option value="todo">К выполнению</option>
-                                <option value="in_progress">В работе</option>
-                                <option value="review">На проверке</option>
-                                <option value="done">Готово</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Приоритет</label>
-                            <select id="newTaskPriority" class="form-select">
-                                <option value="low">Низкий</option>
-                                <option value="medium" selected>Средний</option>
-                                <option value="high">Высокий</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Срок выполнения</label>
-                            <input type="date" id="newTaskDeadline" class="form-control">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="createNewTask()">
-                        <i class="fas fa-plus me-2"></i>Создать задачу
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════ МОДАЛ: Загрузить файл (только для администратора) ═══════════ -->
-    <div class="modal fade" id="uploadFileModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-upload me-2"></i>Загрузить файл</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Выберите файл</label>
-                        <input type="file" id="fileInput" class="form-control" accept="*/*">
-                        <div class="form-text">Максимальный размер: 25 MB</div>
-                    </div>
-                    <div id="filePreview" style="display:none" class="p-3 border rounded bg-light">
-                        <div class="d-flex align-items-center gap-3">
-                            <i class="fas fa-file fa-2x text-muted" id="filePreviewIcon"></i>
-                            <div>
-                                <div class="fw-bold" id="filePreviewName"></div>
-                                <div class="text-muted small" id="filePreviewSize"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="uploadFile()">
-                        <i class="fas fa-upload me-2"></i>Загрузить
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════ МОДАЛ: Фильтры (доступен всем) ═══════════ -->
-    <div class="modal fade" id="filterModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-filter me-2"></i>Фильтры задач</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Статус</label>
-                        <div class="d-flex flex-wrap gap-2" id="filterStatus">
-                            <button class="btn btn-sm btn-outline-secondary filter-status-btn active" data-value="">Все</button>
-                            <button class="btn btn-sm btn-outline-secondary filter-status-btn" data-value="todo">К выполнению</button>
-                            <button class="btn btn-sm btn-outline-secondary filter-status-btn" data-value="in_progress">В работе</button>
-                            <button class="btn btn-sm btn-outline-secondary filter-status-btn" data-value="review">На проверке</button>
-                            <button class="btn btn-sm btn-outline-secondary filter-status-btn" data-value="done">Готово</button>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Приоритет</label>
-                        <div class="d-flex gap-2" id="filterPriority">
-                            <button class="btn btn-sm btn-outline-secondary filter-prio-btn active" data-value="">Все</button>
-                            <button class="btn btn-sm btn-outline-secondary filter-prio-btn" data-value="low">Низкий</button>
-                            <button class="btn btn-sm btn-outline-secondary filter-prio-btn" data-value="medium">Средний</button>
-                            <button class="btn btn-sm btn-outline-secondary filter-prio-btn" data-value="high">Высокий</button>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Исполнитель</label>
-                        <select id="filterExecutor" class="form-select">
-                            <option value="">Все исполнители</option>
-                            <option value="ivan">Иван П.</option>
-                            <option value="alesya">Алеся А.</option>
-                            <option value="petr">Петр К.</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Поиск по названию</label>
-                        <input type="text" id="filterSearch" class="form-control" placeholder="Введите текст...">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
-                        <i class="fas fa-times me-1"></i>Сбросить
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="applyFilters()" data-bs-dismiss="modal">
-                        <i class="fas fa-check me-1"></i>Применить
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    // ═══════════════════════════════════════════════════
-    //  КОНФИГУРАЦИЯ ПОЛЬЗОВАТЕЛЯ
-    //  В Django заменить на:
-    //    <body data-role="{{ user.profile.role }}" data-username="{{ user.get_full_name|default:user.username }}">
-    // ═══════════════════════════════════════════════════
-    const bodyEl   = document.body;
-    const isAdmin  = bodyEl.dataset.role === 'admin';
-    const username = bodyEl.dataset.username || 'Пользователь';
-
-    // ─── Navbar: имя ───
-    document.getElementById('navUsername').textContent = username;
-    // Аватар — ui-avatars по имени
-    const navAvatar = document.getElementById('navAvatar');
-    navAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&size=64&background=46344e&color=fff`;
-    navAvatar.style.display = '';
-
-    // ═══════════════════════════════════════════════════
-    //  БЛОКИРОВКА ПОЛЕЙ ДЛЯ ОБЫЧНОГО СОТРУДНИКА
-    // ═══════════════════════════════════════════════════
-    const adminOnlyFieldIds = ['taskTitle', 'projectName', 'executorSelect', 'statusSelect', 'prioritySelect', 'deadline'];
-
-    if (!isAdmin) {
-        // Скрываем все элементы с классом admin-only
-        document.querySelectorAll('.admin-only').forEach(el => {
-            el.style.display = 'none';
-        });
-
-        // Блокируем поля
-        adminOnlyFieldIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.setAttribute('readonly', true);
-            el.classList.add('disabled-field');
-            if (el.tagName === 'SELECT') {
-                el.disabled = true;
-                el.classList.add('disabled-field');
-            }
-        });
-
-        // Показываем уведомление
-        const notice = document.getElementById('employeeNotice');
-        if (notice) notice.style.display = 'flex';
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  КРУЖОК ПРОГРЕССА + RANGE SLIDER
-    // ═══════════════════════════════════════════════════
-    const CIRCUMFERENCE = 2 * Math.PI * 33; // r=33 => ~207.3
-
-    function setCircleProgress(percent) {
-        const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
-        // Боковой кружок
-        const sideCircle = document.getElementById('sideCirclePath');
-        const sideVal    = document.getElementById('sideCircleVal');
-        if (sideCircle) { sideCircle.style.strokeDashoffset = offset; }
-        if (sideVal)    { sideVal.textContent = percent; }
-        // Кружок в шапке задачи
-        const headCircle = document.getElementById('headerCirclePath');
-        const headVal    = document.getElementById('headerCircleVal');
-        if (headCircle) { headCircle.style.strokeDashoffset = offset; }
-        if (headVal)    { headVal.textContent = percent; }
-        // Текстовый счётчик под слайдером
-        const pv = document.getElementById('progressValue');
-        if (pv) pv.textContent = percent;
-    }
-
-    const progressRange = document.getElementById('progressRange');
-    if (progressRange) {
-        // Инициализация при загрузке
-        setCircleProgress(parseInt(progressRange.value));
-
-        progressRange.addEventListener('input', () => {
-            setCircleProgress(parseInt(progressRange.value));
-        });
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  TOAST-УВЕДОМЛЕНИЯ
-    // ═══════════════════════════════════════════════════
-    function showToast(msg, type = 'success') {
-        const toastEl = document.getElementById('appToast');
-        const toastMsg = document.getElementById('toastMsg');
-        toastMsg.textContent = msg;
-        toastEl.className = `toast align-items-center text-white border-0 bg-${type}`;
-        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-        toast.show();
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  СОХРАНЕНИЕ ПРОГРЕССА (доступно всем)
-    // ═══════════════════════════════════════════════════
-    function saveProgress() {
-        const pct = parseInt(document.getElementById('progressRange').value);
-        const now = new Date().toLocaleString('ru-RU', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-        // Обновить кружки
-        setCircleProgress(pct);
-        // Обновить prevState.progress чтобы saveTask не дублировал
-        prevState.progress = String(pct);
-        // Обновить прогресс в списке задач (задача с id 101 — текущая)
-        const curTask = taskDB.find(t => t.id === 101);
-        if (curTask) { curTask.progress = pct; renderTaskList(taskDB); }
-        addHistoryItem(`<strong>${username}</strong> обновил(а) прогресс до <strong>${pct}%</strong>`, 'fa-chart-line', now);
-        showToast(`✅ Прогресс сохранён: ${pct}%`);
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  СОХРАНЕНИЕ ВСЕХ ИЗМЕНЕНИЙ (только администратор)
-    // ═══════════════════════════════════════════════════
-    // Запоминаем предыдущие значения чтобы фиксировать только изменения
-    let prevState = {};
-    function captureState() {
-        const s = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
-        const t = (id) => { const el = document.getElementById(id); return el ? el.options[el.selectedIndex]?.text || '' : ''; };
-        return {
-            title:    s('taskTitle'),
-            project:  s('projectName'),
-            executor: t('executorSelect'),
-            status:   t('statusSelect'),
-            statusVal:s('statusSelect'),
-            priority: t('prioritySelect'),
-            deadline: s('deadline'),
-            progress: s('progressRange'),
-        };
-    }
-    prevState = captureState();
-
-    function saveTask() {
-        if (!isAdmin) return;
-        const now = new Date().toLocaleString('ru-RU', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-        const cur = captureState();
-        const changes = [];
-
-        if (cur.title    !== prevState.title)    changes.push(`название: «${prevState.title}» → «${cur.title}»`);
-        if (cur.project  !== prevState.project)  changes.push(`проект: «${prevState.project}» → «${cur.project}»`);
-        if (cur.executor !== prevState.executor) changes.push(`исполнитель: ${prevState.executor || 'не назначен'} → ${cur.executor || 'не назначен'}`);
-        if (cur.status   !== prevState.status)   changes.push(`статус: ${prevState.status} → ${cur.status}`);
-        if (cur.priority !== prevState.priority) changes.push(`приоритет: ${prevState.priority} → ${cur.priority}`);
-        if (cur.deadline !== prevState.deadline) changes.push(`срок: ${prevState.deadline || '—'} → ${cur.deadline || '—'}`);
-        if (cur.progress !== prevState.progress) changes.push(`прогресс: ${prevState.progress}% → ${cur.progress}%`);
-
-        // Обновляем шапку задачи
-        const titleEl = document.querySelector('.task-header h4');
-        if (titleEl && cur.title) titleEl.textContent = cur.title;
-
-        // Обновляем статус в шапке
-        const statusDotMap = { todo:'bg-secondary', in_progress:'bg-info', review:'bg-warning', done:'bg-success' };
-        const statusHeaderBtn = document.querySelector('.header-status-btn');
-        if (statusHeaderBtn) {
-            const dot = statusHeaderBtn.querySelector('.status-dot');
-            const txt = statusHeaderBtn.childNodes[statusHeaderBtn.childNodes.length - 1];
-            if (dot) { dot.className = 'status-dot ' + (statusDotMap[cur.statusVal] || 'bg-secondary'); }
-            if (txt)  { txt.textContent = cur.status; }
-        }
-
-        // Обновляем прогресс кружков
-        setCircleProgress(parseInt(cur.progress));
-
-        // Обновляем задачу в списке задач если есть
-        renderTaskList(taskDB);
-
-        const msg = changes.length > 0
-            ? `<strong>${username}</strong> сохранил(а) изменения: ${changes.join('; ')}`
-            : `<strong>${username}</strong> сохранил(а) задачу (без изменений)`;
-        addHistoryItem(msg, 'fa-save', now);
-
-        prevState = cur;
-        showToast('✅ Все изменения сохранены!');
-    }
-
-    function deleteTask() {
-        if (!isAdmin) return;
-        if (confirm('Удалить задачу? Это действие необратимо.')) {
-            const now = new Date().toLocaleString('ru-RU', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-            addHistoryItem(`<strong>${username}</strong> удалил(а) задачу`, 'fa-trash-alt', now);
-            showToast('🗑 Задача удалена.', 'danger');
-        }
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  КОММЕНТАРИИ
-    // ═══════════════════════════════════════════════════
-    function updateCommentCount() {
-        const count = document.querySelectorAll('#commentsList .comment-card').length;
-        document.getElementById('commentCount').textContent = count;
-    }
-
-    function addComment() {
-        const input = document.getElementById('commentInput');
-        const text = input.value.trim();
-        if (!text) { showToast('Введите текст комментария.', 'warning'); return; }
-
-        const now = new Date().toLocaleString('ru-RU', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-        const div = document.createElement('div');
-        div.className = 'comment-card';
-        div.innerHTML = `
-            <div class="comment-meta">
-                <strong>${username}</strong> · Только что
-            </div>
-            <p class="mb-0">${escapeHtml(text)}</p>`;
-
-        document.getElementById('commentsList').prepend(div);
-        input.value = '';
-        updateCommentCount();
-
-        // Запись в историю
-        addHistoryItem(`<strong>${username}</strong> добавил(а) комментарий`, 'fa-comment', now);
-        showToast('💬 Комментарий добавлен.');
-    }
-
-    function escapeHtml(str) {
-        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  ИСТОРИЯ
-    // ═══════════════════════════════════════════════════
-    function addHistoryItem(html, icon, time) {
-        const list = document.getElementById('historyList');
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = `
-            <div class="history-icon"><i class="fas ${icon}"></i></div>
-            <div>${html}<div class="text-muted small">${time}</div></div>`;
-        list.prepend(div);
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  СВЯЗАННЫЕ ЗАДАЧИ — база данных в памяти
-    // ═══════════════════════════════════════════════════
-    const relatedTasks = {
-        1: { title: 'Документирование API',       prio: 'low',    prioLabel: 'Низкий',  status: 'todo',        statusLabel: 'К выполнению', desc: 'Создать Swagger-документацию для новых endpoints',   date: '30 июн', progress: 0 },
-        2: { title: 'Фронтенд для авторизации',   prio: 'medium', prioLabel: 'Средний', status: 'in_progress', statusLabel: 'В работе',     desc: 'Реализовать формы входа и регистрации',              date: '28 июн', progress: 30 },
-    };
-
-    let currentRelatedId = null;
-
-    const prioColors  = { low:'#198754', medium:'#ffc107', high:'#dc3545' };
-    const prioText    = { low:'#fff',    medium:'#000',    high:'#fff' };
-    const statusColors= { todo:'#6c757d', in_progress:'#0dcaf0', review:'#ffc107', done:'#198754' };
-    const statusText  = { todo:'#fff',   in_progress:'#000',     review:'#000',    done:'#fff' };
-
-    function openRelatedTask(id) {
-        const t = relatedTasks[id];
-        if (!t) return;
-        currentRelatedId = id;
-        document.getElementById('relatedModalTitle').textContent = t.title;
-        document.getElementById('relatedModalDesc').textContent  = t.desc;
-        document.getElementById('relatedModalDate').textContent  = t.date;
-
-        const statusEl = document.getElementById('relatedModalStatus');
-        statusEl.innerHTML = `<span class="status-badge" style="background:${statusColors[t.status]};color:${statusText[t.status]}">${t.statusLabel}</span>`;
-
-        const prioEl = document.getElementById('relatedModalPriority');
-        prioEl.innerHTML = `<span class="priority-badge" style="background:${prioColors[t.prio]};color:${prioText[t.prio]}">${t.prioLabel}</span>`;
-
-        document.getElementById('relatedModalProgressBar').style.width = t.progress + '%';
-        document.getElementById('relatedModalProgressVal').textContent = `${t.progress}%`;
-
-        new bootstrap.Modal(document.getElementById('relatedDetailModal')).show();
-    }
-
-    function goToRelatedTask() {
-        showToast('↗ Переход к задаче (в реальном проекте — ссылка на /tasks/' + currentRelatedId + '/)');
-        bootstrap.Modal.getInstance(document.getElementById('relatedDetailModal')).hide();
-    }
-
-    function removeRelated(id) {
-        if (!isAdmin) return;
-        if (!confirm('Удалить связь с задачей?')) return;
-        const el = document.getElementById('related-' + id);
-        if (el) el.remove();
-        delete relatedTasks[id];
-        checkNoRelated();
-        showToast('🔗 Связь удалена.', 'warning');
-    }
-
-    function checkNoRelated() {
-        const hasCards = document.querySelectorAll('#relatedTasksContainer .col-md-4').length > 0;
-        document.getElementById('noRelatedMsg').style.display = hasCards ? 'none' : 'block';
-    }
-
-    let nextRelatedId = 10;
-    function addRelatedTask() {
-        const sel = document.getElementById('relatedTaskSelect');
-        const opt = sel.options[sel.selectedIndex];
-        if (!opt.value) { showToast('Выберите задачу.', 'warning'); return; }
-
-        const id = nextRelatedId++;
-        const data = {
-            title:       opt.dataset.title,
-            prio:        opt.dataset.prio,
-            prioLabel:   opt.dataset.prioLabel,
-            status:      opt.dataset.status,
-            statusLabel: opt.dataset.statusLabel,
-            desc:        opt.dataset.desc,
-            date:        opt.dataset.date,
-            progress:    parseInt(opt.dataset.progress || 0),
-        };
-        relatedTasks[id] = data;
-
-        const col = document.createElement('div');
-        col.className = 'col-md-4';
-        col.id = 'related-' + id;
-        col.innerHTML = `
-            <div class="related-task-card prio-${data.prio}" onclick="openRelatedTask(${id})">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="mb-0">${data.title}</h6>
-                    <span class="priority-badge" style="background:${prioColors[data.prio]};color:${prioText[data.prio]}">${data.prioLabel}</span>
-                </div>
-                <p class="small text-muted mb-2">${data.desc}</p>
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="status-badge" style="background:${statusColors[data.status]};color:${statusText[data.status]}">${data.statusLabel}</span>
-                    <small class="text-muted"><i class="far fa-calendar me-1"></i>${data.date}</small>
-                </div>
-                <div class="mini-progress"><div class="mini-progress-bar" style="width:${data.progress}%"></div></div>
-                <div class="d-flex justify-content-between mt-1">
-                    <small class="text-muted">Прогресс: ${data.progress}%</small>
-                    <button class="btn btn-link btn-sm text-danger p-0 admin-only"
-                        onclick="event.stopPropagation(); removeRelated(${id})"
-                        title="Удалить связь">
-                        <i class="fas fa-unlink fa-sm"></i>
-                    </button>
-                </div>
-            </div>`;
-
-        document.getElementById('relatedTasksContainer').appendChild(col);
-        // Убираем использованную опцию, чтобы не добавлять дважды
-        opt.remove();
-        if (sel.options.length <= 1) {
-            document.querySelector('[data-bs-target="#addRelatedModal"]').disabled = true;
-        }
-
-        bootstrap.Modal.getInstance(document.getElementById('addRelatedModal')).hide();
-        checkNoRelated();
-        showToast('✅ Связанная задача добавлена.');
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  БАЗА ЗАДАЧ В ПАМЯТИ (для фильтра)
-    // ═══════════════════════════════════════════════════
-    const taskDB = [
-        { id: 101, title: 'Разработка API для авторизации', desc: 'JWT-аутентификация и валидация входных данных', project: 'Веб-сайт компании', executor: 'ivan', executorLabel: 'Иван П.', status: 'in_progress', statusLabel: 'В работе', priority: 'medium', prioLabel: 'Средний', deadline: '25.06.2026', progress: 45 },
-        { id: 102, title: 'Документирование API',           desc: 'Создать Swagger-документацию для новых endpoints', project: 'Веб-сайт компании', executor: 'ivan', executorLabel: 'Иван П.', status: 'todo',        statusLabel: 'К выполнению', priority: 'low',    prioLabel: 'Низкий',  deadline: '30.06.2026', progress: 0  },
-        { id: 103, title: 'Фронтенд для авторизации',      desc: 'Реализовать формы входа и регистрации',        project: 'Веб-сайт компании', executor: 'alesya',executorLabel: 'Алеся А.',status: 'in_progress', statusLabel: 'В работе', priority: 'medium', prioLabel: 'Средний', deadline: '28.06.2026', progress: 30 },
-    ];
-
-    let activeFilters = { status: '', priority: '', executor: '', search: '' };
-
-    const prioColors2   = { low:'#198754', medium:'#ffc107', high:'#dc3545' };
-    const prioTextC2    = { low:'#fff',    medium:'#000',    high:'#fff'    };
-    const statusColors2 = { todo:'#6c757d', in_progress:'#0dcaf0', review:'#ffc107', done:'#198754' };
-    const statusTextC2  = { todo:'#fff',    in_progress:'#000',     review:'#000',    done:'#fff'    };
-
-    function renderTaskList(tasks) {
-        const container = document.getElementById('taskListContainer');
-        const noMsg     = document.getElementById('noTasksMsg');
-        const countEl   = document.getElementById('taskListCount');
-        container.innerHTML = '';
-
-        const filtered = tasks.filter(t => {
-            if (activeFilters.status   && t.status   !== activeFilters.status)   return false;
-            if (activeFilters.priority && t.priority !== activeFilters.priority) return false;
-            if (activeFilters.executor && t.executor !== activeFilters.executor) return false;
-            if (activeFilters.search   && !t.title.toLowerCase().includes(activeFilters.search.toLowerCase())) return false;
-            return true;
-        });
-
-        countEl.textContent = `Показано: ${filtered.length} из ${tasks.length}`;
-        noMsg.style.display = filtered.length === 0 ? 'block' : 'none';
-
-        filtered.forEach(t => {
-            const col = document.createElement('div');
-            col.className = 'mb-3';
-            col.innerHTML = `
-                <div class="task-card prio-${t.priority} p-3 d-flex justify-content-between align-items-center">
-                    <div class="flex-grow-1">
-                        <div class="fw-bold mb-1">${escapeHtml(t.title)}</div>
-                        <div class="text-muted small mb-1">${escapeHtml(t.desc)}</div>
-                        <div class="d-flex gap-2 align-items-center flex-wrap">
-                            <span class="status-badge text-white" style="background:${statusColors2[t.status]};color:${statusTextC2[t.status]} !important">${t.statusLabel}</span>
-                            <span class="priority-badge" style="background:${prioColors2[t.priority]};color:${prioTextC2[t.priority]}">${t.prioLabel}</span>
-                            <small class="text-muted"><i class="fas fa-user me-1"></i>${t.executorLabel || '—'}</small>
-                            ${t.deadline ? `<small class="text-muted"><i class="far fa-calendar me-1"></i>${t.deadline}</small>` : ''}
-                        </div>
-                    </div>
-                    <div class="ms-3 text-end" style="min-width:60px">
-                        <div class="fw-bold" style="color:var(--accent-color)">${t.progress}%</div>
-                        <div class="mini-progress" style="width:60px">
-                            <div class="mini-progress-bar" style="width:${t.progress}%"></div>
-                        </div>
-                    </div>
-                </div>`;
-            container.appendChild(col);
-        });
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  СОЗДАТЬ НОВУЮ ЗАДАЧУ
-    // ═══════════════════════════════════════════════════
-    function createNewTask() {
-        const title    = document.getElementById('newTaskTitle').value.trim();
-        const desc     = document.getElementById('newTaskDesc').value.trim();
-        const project  = document.getElementById('newTaskProject').value.trim();
-        const execEl   = document.getElementById('newTaskExecutor');
-        const executor = execEl.value;
-        const executorLabel = execEl.options[execEl.selectedIndex].text;
-        const statusEl = document.getElementById('newTaskStatus');
-        const status   = statusEl.value;
-        const statusLabel = statusEl.options[statusEl.selectedIndex].text;
-        const prioEl   = document.getElementById('newTaskPriority');
-        const priority = prioEl.value;
-        const prioLabel = prioEl.options[prioEl.selectedIndex].text;
-        const deadline = document.getElementById('newTaskDeadline').value;
-
-        if (!title) { showToast('Введите название задачи.', 'warning'); return; }
-
-        const newTask = {
-            id: Date.now(),
-            title, desc, project,
-            executor, executorLabel,
-            status, statusLabel,
-            priority, prioLabel,
-            deadline: deadline ? deadline.split('-').reverse().join('.') : '',
-            progress: 0,
-        };
-        taskDB.push(newTask);
-        renderTaskList(taskDB);
-
-        // История
-        const now = new Date().toLocaleString('ru-RU', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-        addHistoryItem(`<strong>${username}</strong> создал(а) задачу «${escapeHtml(title)}»`, 'fa-plus', now);
-
-        // Закрыть модал и сбросить форму
-        bootstrap.Modal.getInstance(document.getElementById('newTaskModal')).hide();
-        document.getElementById('newTaskTitle').value = '';
-        document.getElementById('newTaskDesc').value  = '';
-        document.getElementById('newTaskDeadline').value = '';
-        document.getElementById('newTaskStatus').value   = 'todo';
-        document.getElementById('newTaskPriority').value = 'medium';
-        document.getElementById('newTaskExecutor').value = '';
-
-        showToast(`✅ Задача «${title}» создана.`);
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  ЗАГРУЗИТЬ ФАЙЛ
-    // ═══════════════════════════════════════════════════
-    const fileIconMap = {
-        pdf:'fa-file-pdf', doc:'fa-file-word', docx:'fa-file-word',
-        xls:'fa-file-excel', xlsx:'fa-file-excel',
-        png:'fa-file-image', jpg:'fa-file-image', jpeg:'fa-file-image',
-        zip:'fa-file-archive', rar:'fa-file-archive',
-        js:'fa-file-code', py:'fa-file-code', json:'fa-file-code',
-        txt:'fa-file-alt',
-    };
-
-    document.getElementById('fileInput').addEventListener('change', function() {
-        const f = this.files[0];
-        if (!f) { document.getElementById('filePreview').style.display = 'none'; return; }
-
-        const ext  = f.name.split('.').pop().toLowerCase();
-        const icon = fileIconMap[ext] || 'fa-file';
-        const size = f.size < 1024 ? `${f.size} Б`
-                   : f.size < 1024*1024 ? `${(f.size/1024).toFixed(1)} КБ`
-                   : `${(f.size/1024/1024).toFixed(1)} МБ`;
-
-        document.getElementById('filePreviewIcon').className = `fas ${icon} fa-2x text-muted`;
-        document.getElementById('filePreviewName').textContent = f.name;
-        document.getElementById('filePreviewSize').textContent = size;
-        document.getElementById('filePreview').style.display = 'block';
-    });
-
-    function uploadFile() {
-        const input = document.getElementById('fileInput');
-        const f = input.files[0];
-        if (!f) { showToast('Выберите файл.', 'warning'); return; }
-
-        if (f.size > 25 * 1024 * 1024) { showToast('Файл слишком большой. Максимум 25 МБ.', 'danger'); return; }
-
-        const ext  = f.name.split('.').pop().toLowerCase();
-        const icon = fileIconMap[ext] || 'fa-file';
-        const size = f.size < 1024 ? `${f.size} Б`
-                   : f.size < 1024*1024 ? `${(f.size/1024).toFixed(1)} КБ`
-                   : `${(f.size/1024/1024).toFixed(1)} МБ`;
-        const today = new Date().toLocaleDateString('ru-RU', { day:'numeric', month:'long' });
-
-        // Добавляем в список файлов
-        const fileList = document.querySelector('.file-attachment').parentElement;
-        const div = document.createElement('div');
-        div.className = 'file-attachment';
-        div.innerHTML = `
-            <div class="file-icon"><i class="fas ${icon}"></i></div>
-            <div class="flex-grow-1">
-                <strong>${escapeHtml(f.name)}</strong>
-                <div class="text-muted small">Загружено: ${username}, ${today} • ${size}</div>
-            </div>
-            <button class="btn btn-sm btn-outline-danger ms-2" onclick="
-                const fname = '${escapeHtml(f.name).replace(/'/g,"\\'")}';
-                const now2 = new Date().toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'});
-                addHistoryItem('<strong>${username}</strong> удалил(а) файл «'+fname+'»','fa-trash-alt',now2);
-                this.closest('.file-attachment').remove();
-                showToast('Файл удалён.','warning');">
-                <i class="fas fa-trash-alt"></i>
-            </button>`;
-        fileList.appendChild(div);
-
-        // История
-        const now = new Date().toLocaleString('ru-RU', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-        addHistoryItem(`<strong>${username}</strong> загрузил(а) файл «${escapeHtml(f.name)}»`, 'fa-paperclip', now);
-
-        bootstrap.Modal.getInstance(document.getElementById('uploadFileModal')).hide();
-        input.value = '';
-        document.getElementById('filePreview').style.display = 'none';
-        showToast(`📎 Файл «${f.name}» загружен.`);
-    }
-
-    // ═══════════════════════════════════════════════════
-    //  ФИЛЬТРЫ
-    // ═══════════════════════════════════════════════════
-    // Переключение кнопок-фильтров
-    document.querySelectorAll('.filter-status-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.filter-status-btn').forEach(b => b.classList.remove('active','btn-primary'));
-            document.querySelectorAll('.filter-status-btn').forEach(b => b.classList.add('btn-outline-secondary'));
-            btn.classList.add('active','btn-primary');
-            btn.classList.remove('btn-outline-secondary');
-            activeFilters.status = btn.dataset.value;
-        });
-    });
-
-    document.querySelectorAll('.filter-prio-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.filter-prio-btn').forEach(b => b.classList.remove('active','btn-primary'));
-            document.querySelectorAll('.filter-prio-btn').forEach(b => b.classList.add('btn-outline-secondary'));
-            btn.classList.add('active','btn-primary');
-            btn.classList.remove('btn-outline-secondary');
-            activeFilters.priority = btn.dataset.value;
-        });
-    });
-
-    function applyFilters() {
-        activeFilters.executor = document.getElementById('filterExecutor').value;
-        activeFilters.search   = document.getElementById('filterSearch').value.trim();
-        renderTaskList(taskDB);
-
-        // Показать бейдж активных фильтров на кнопке
-        const hasFilter = activeFilters.status || activeFilters.priority || activeFilters.executor || activeFilters.search;
-        const filterBtn = document.querySelector('[data-bs-target="#filterModal"]');
-        filterBtn.innerHTML = hasFilter
-            ? '<i class="fas fa-filter me-2"></i>Фильтры <span class="badge bg-danger ms-1">●</span>'
-            : '<i class="fas fa-filter me-2"></i>Фильтры';
-    }
-
-    function resetFilters() {
-        activeFilters = { status: '', priority: '', executor: '', search: '' };
-        document.getElementById('filterExecutor').value = '';
-        document.getElementById('filterSearch').value   = '';
-        document.querySelectorAll('.filter-status-btn').forEach((b,i) => {
-            b.classList.toggle('active', i===0);
-            b.classList.toggle('btn-primary', i===0);
-            b.classList.toggle('btn-outline-secondary', i!==0);
-        });
-        document.querySelectorAll('.filter-prio-btn').forEach((b,i) => {
-            b.classList.toggle('active', i===0);
-            b.classList.toggle('btn-primary', i===0);
-            b.classList.toggle('btn-outline-secondary', i!==0);
-        });
-        renderTaskList(taskDB);
-        const filterBtn = document.querySelector('[data-bs-target="#filterModal"]');
-        filterBtn.innerHTML = '<i class="fas fa-filter me-2"></i>Фильтры';
-        showToast('Фильтры сброшены.', 'secondary');
-    }
-
-    // Первоначальный рендер списка задач
-    renderTaskList(taskDB);
-    // Захватываем начальное состояние полей ПОСЛЕ рендера
-    prevState = captureState();
-
-    // ═══════════════════════════════════════════════════
-    //  ИНИЦИАЛИЗАЦИЯ
-    // ═══════════════════════════════════════════════════
-    updateCommentCount();
-    </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -128,10 +128,8 @@ APPEND_SLASH = True
 
 STATIC_URL = 'static/'
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    "/var/www/static/"
-]
+_static_candidates = [BASE_DIR / "static", Path("/var/www/static")]
+STATICFILES_DIRS = [p for p in _static_candidates if p.is_dir()]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 

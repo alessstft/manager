@@ -28,13 +28,16 @@
         <a class="navbar-brand" href="{% url 'projects' %}">
           <i class="fas fa-project-diagram me-2"></i>CRM
         </a>
-        <div class="navbar-nav ms-auto">
+        <div class="navbar-nav ms-auto d-flex flex-row flex-wrap align-items-center gap-1">
           <a class="nav-link" href="{% url 'projects' %}">Проекты</a>
           <a class="nav-link" href="{% url 'tasks' %}">Задачи</a>
+          <a class="nav-link" href="{% url 'workload' %}">Нагрузка</a>
           {% if is_company_admin %}
           <a class="nav-link" href="{% url 'admin_create_employee' %}">Сотрудники</a>
           {% endif %}
-          <a class="nav-link" href="{% url 'logout' %}">Выход</a>
+          <form action="{% url 'logout' %}" method="post" class="d-inline m-0">{% csrf_token %}
+            <button type="submit" class="nav-link btn btn-link text-white text-decoration-none border-0 p-2">Выход</button>
+          </form>
         </div>
       </div>
     </nav>

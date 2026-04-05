@@ -1,4 +1,6 @@
 import os
+from functools import wraps
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -6,6 +8,9 @@ from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.db.models import Avg, Q
+from django.conf import settings
+from django.db.utils import DatabaseError, OperationalError
 
 from users.models import Profile
 from .models import Comment, HistoryEntry, Project, RelatedTask, Task, TaskFile
@@ -19,11 +24,53 @@ def _is_admin(user):
     except Profile.DoesNotExist:
         return False
 
+
+def _can_access_task(user, task):
+    if _is_admin(user):
+        return True
+    if task.assigned_to_id == user.id or task.created_by_id == user.id:
+        return True
+    p = task.project
+    return (
+        p.members.filter(pk=user.pk).exists()
+        or p.owner_id == user.id
+        or p.assigned_to_id == user.id
+    )
+
+
 def _uname(user):
     return user.get_full_name().strip() or user.username
 
 def _hist(task, user, action, icon='edit'):
     HistoryEntry.objects.create(task=task, user=user, action=action, icon=icon)
+
+
+def _new_app_db_ready():
+    """Проекты с участниками (M2M → new_project_members) и задачи — основные таблицы приложения new."""
+    try:
+        Project.members.through.objects.exists()
+        Task.objects.exists()
+        return True
+    except (OperationalError, DatabaseError):
+        return False
+
+
+def _db_schema_setup_response(request):
+    ctx = {}
+    eng = settings.DATABASES['default'].get('ENGINE', '')
+    if 'sqlite' in eng:
+        ctx['sqlite_path'] = str(settings.DATABASES['default'].get('NAME', ''))
+    return render(request, 'schema_setup.html', ctx)
+
+
+def require_new_app_db(view_func):
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not _new_app_db_ready():
+            return _db_schema_setup_response(request)
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped
 
 
 # ─── index ──────────────────────────────────────────────────
@@ -35,12 +82,16 @@ def index(request):
 # ─── projects ───────────────────────────────────────────────
 
 @login_required
+@require_new_app_db
 def projects(request):
     if _is_admin(request.user):
         qs = Project.objects.all()
     else:
-        qs = (Project.objects.filter(members=request.user) |
-              Project.objects.filter(owner=request.user)).distinct()
+        qs = (
+            Project.objects.filter(members=request.user)
+            | Project.objects.filter(owner=request.user)
+            | Project.objects.filter(assigned_to=request.user)
+        ).distinct()
 
     all_users = User.objects.select_related('profile').all()
 
@@ -86,6 +137,7 @@ def projects(request):
 
 
 @login_required
+@require_new_app_db
 @require_POST
 def delete_project(request, project_id):
     project = get_object_or_404(Project, id=project_id)
@@ -99,6 +151,7 @@ def delete_project(request, project_id):
 
 
 @login_required
+@require_new_app_db
 @require_POST
 def edit_project(request, project_id):
     project = get_object_or_404(Project, id=project_id)
@@ -118,11 +171,15 @@ def edit_project(request, project_id):
     from django.contrib.auth.models import User as U
     project.assigned_to = U.objects.filter(id=assigned_id).first() if assigned_id else None
     project.save()
+    project.members.add(project.owner)
+    if project.assigned_to_id:
+        project.members.add(project.assigned_to)
     messages.success(request, f'Проект «{project.name}» обновлён.')
     return redirect('projects')
 
 
 @login_required
+@require_new_app_db
 def create_project(request):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
@@ -134,11 +191,15 @@ def create_project(request):
         if name:
             from django.contrib.auth.models import User as U
             assigned = U.objects.filter(id=assigned_id).first() if assigned_id else None
-            Project.objects.create(
+            project = Project.objects.create(
                 name=name, description=description, priority=priority,
                 start_date=start_date, end_date=end_date, owner=request.user,
                 assigned_to=assigned,
             )
+            # Список проектов для сотрудника строится по M2M members, а не по assigned_to
+            project.members.add(request.user)
+            if assigned:
+                project.members.add(assigned)
             messages.success(request, f'Проект «{name}» создан.')
         else:
             messages.error(request, 'Укажите название проекта.')
@@ -148,12 +209,17 @@ def create_project(request):
 # ─── tasks list ─────────────────────────────────────────────
 
 @login_required
+@require_new_app_db
 def tasks_list(request):
     if _is_admin(request.user):
         task_qs = Task.objects.select_related('project', 'assigned_to', 'created_by').all()
     else:
         task_qs = Task.objects.filter(
-            project__members=request.user
+            Q(assigned_to=request.user)
+            | Q(created_by=request.user)
+            | Q(project__members=request.user)
+            | Q(project__owner=request.user)
+            | Q(project__assigned_to=request.user)
         ).select_related('project', 'assigned_to', 'created_by').distinct()
 
     status_filter   = request.GET.get('status')
@@ -166,8 +232,11 @@ def tasks_list(request):
     if _is_admin(request.user):
         project_qs = Project.objects.all()
     else:
-        project_qs = (Project.objects.filter(members=request.user) |
-                      Project.objects.filter(owner=request.user)).distinct()
+        project_qs = (
+            Project.objects.filter(members=request.user)
+            | Project.objects.filter(owner=request.user)
+            | Project.objects.filter(assigned_to=request.user)
+        ).distinct()
 
     all_users = User.objects.select_related('profile').all()
 
@@ -197,6 +266,13 @@ def tasks_list(request):
         else:
             messages.error(request, 'Укажите название и проект.')
 
+    current_project_id = None
+    if project_filter:
+        try:
+            current_project_id = int(project_filter)
+        except (TypeError, ValueError):
+            pass
+
     return render(request, 'tasks.html', {
         'tasks': task_qs,
         'projects': project_qs,
@@ -206,16 +282,22 @@ def tasks_list(request):
         'priority_choices': Task.PRIORITY_CHOICES,
         'current_status': status_filter,
         'current_priority': priority_filter,
-        'current_project': project_filter,
+        'current_project_id': current_project_id,
     })
 
 
 # ─── task detail ────────────────────────────────────────────
 
 @login_required
+@require_new_app_db
 def task_detail(request, task_id):
-    # Получаем задачу
-    task = get_object_or_404(Task, id=task_id)
+    task = get_object_or_404(
+        Task.objects.select_related('project', 'assigned_to', 'created_by'),
+        id=task_id,
+    )
+    if not _can_access_task(request.user, task):
+        messages.error(request, 'Нет доступа к этой задаче.')
+        return redirect('tasks')
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -251,7 +333,6 @@ def task_detail(request, task_id):
         # Остальные действия (update, delete, upload и т.д.) — оставляем как были
         # (если хочешь, могу упростить и их тоже)
 
-    # При GET (и после редиректа) загружаем всё заново
     task = get_object_or_404(
         Task.objects.select_related('project', 'assigned_to', 'created_by'),
         id=task_id,
@@ -277,8 +358,12 @@ def task_detail(request, task_id):
     })
 
 @login_required
+@require_new_app_db
 def download_file(request, file_id):
-    tf = get_object_or_404(TaskFile, id=file_id)
+    tf = get_object_or_404(TaskFile.objects.select_related('task__project'), id=file_id)
+    if not _can_access_task(request.user, tf.task):
+        messages.error(request, 'Нет доступа к файлу.')
+        return redirect('tasks')
     return FileResponse(tf.file.open('rb'), as_attachment=True, filename=tf.original_name)
 
 
@@ -287,3 +372,83 @@ def team(request):
     employees = User.objects.select_related('profile').filter(profile__role=Profile.Role.EMPLOYEE)
     admins    = User.objects.select_related('profile').filter(profile__role=Profile.Role.ADMIN)
     return render(request, 'team.html', {'employees': employees, 'admins': admins})
+
+
+@login_required
+@require_new_app_db
+def workload(request):
+    """Актуальная нагрузка по задачам и просрочки (данные из БД)."""
+    today = timezone.localdate()
+    is_admin = _is_admin(request.user)
+
+    if is_admin:
+        users_qs = User.objects.select_related('profile').all().order_by('profile__role', 'username')
+    else:
+        users_qs = User.objects.filter(pk=request.user.pk).select_related('profile')
+
+    employee_rows = []
+    for u in users_qs:
+        try:
+            prof = u.profile
+        except Profile.DoesNotExist:
+            continue
+
+        # Все незавершённые задачи, назначенные на сотрудника (в т.ч. из админки), без фильтра по участию в проекте
+        active_qs = Task.objects.filter(assigned_to=u).exclude(status='done')
+        active_count = active_qs.count()
+        overdue_assigned = active_qs.filter(due_date__isnull=False, due_date__lt=today).count()
+        avg_prog = active_qs.aggregate(v=Avg('progress'))['v']
+        avg_prog = int(round(avg_prog or 0))
+        load_pct = min(100, active_count * 12 + avg_prog // 2)
+
+        active_tasks_list = list(
+            active_qs.select_related('project').order_by('project__name', 'title')[:40]
+        )
+        project_names = sorted({t.project.name for t in active_tasks_list})
+
+        employee_rows.append({
+            'name': prof.display_name(),
+            'role_label': prof.get_role_display(),
+            'active_count': active_count,
+            'overdue_count': overdue_assigned,
+            'avg_progress': avg_prog,
+            'load_percent': load_pct,
+            'project_names': project_names,
+            'active_tasks': active_tasks_list,
+        })
+
+    overdue_qs = (
+        Task.objects.filter(due_date__isnull=False, due_date__lt=today)
+        .exclude(status='done')
+        .select_related('project', 'assigned_to', 'assigned_to__profile')
+        .order_by('due_date')
+    )
+    if not is_admin:
+        overdue_qs = overdue_qs.filter(assigned_to=request.user)
+
+    delay_rows = []
+    for t in overdue_qs:
+        if t.assigned_to_id:
+            try:
+                assignee = t.assigned_to.profile.display_name()
+            except Profile.DoesNotExist:
+                assignee = t.assigned_to.username
+        else:
+            assignee = 'Не назначена'
+        desc = (t.description or '').strip()
+        reason = desc if desc else 'Не указано — добавьте пояснение в описании задачи.'
+        if len(reason) > 400:
+            reason = reason[:400] + '…'
+        delay_rows.append({
+            'task': t,
+            'assignee': assignee,
+            'days_late': (today - t.due_date).days,
+            'reason': reason,
+        })
+
+    return render(request, 'workload.html', {
+        'employee_rows': employee_rows,
+        'delay_rows': delay_rows,
+        'is_admin': is_admin,
+        'today': today,
+    })
