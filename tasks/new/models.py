@@ -17,6 +17,9 @@ class Project(models.Model):
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_projects')
     members = models.ManyToManyField(User, related_name='projects', blank=True)
+    assigned_to = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_projects'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

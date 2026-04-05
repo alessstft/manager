@@ -64,8 +64,24 @@ def projects(request):
         else:
             messages.error(request, 'Укажите название проекта.')
 
+    priority_filter = request.GET.getlist('priority')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+
+    if priority_filter:
+        qs = qs.filter(priority__in=priority_filter)
+    if date_from:
+        qs = qs.filter(end_date__gte=date_from)
+    if date_to:
+        qs = qs.filter(end_date__lte=date_to)
+
     return render(request, 'projects.html', {
-        'projects': qs, 'all_users': all_users, 'is_admin': _is_admin(request.user)
+        'projects': qs,
+        'all_users': all_users,
+        'is_admin': _is_admin(request.user),
+        'selected_priorities': priority_filter,
+        'date_from': date_from,
+        'date_to': date_to,
     })
 
 
@@ -79,6 +95,53 @@ def delete_project(request, project_id):
     name = project.name
     project.delete()
     messages.success(request, f'Проект «{name}» удалён.')
+    return redirect('projects')
+
+
+@login_required
+@require_POST
+def edit_project(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    if project.owner != request.user and not _is_admin(request.user):
+        messages.error(request, 'Нет прав для редактирования.')
+        return redirect('projects')
+    name = request.POST.get('name', '').strip()
+    if not name:
+        messages.error(request, 'Укажите название проекта.')
+        return redirect('projects')
+    project.name = name
+    project.description = request.POST.get('description', '').strip()
+    project.priority = request.POST.get('priority', 'medium')
+    project.start_date = request.POST.get('start_date') or None
+    project.end_date = request.POST.get('end_date') or None
+    assigned_id = request.POST.get('assigned_to') or None
+    from django.contrib.auth.models import User as U
+    project.assigned_to = U.objects.filter(id=assigned_id).first() if assigned_id else None
+    project.save()
+    messages.success(request, f'Проект «{project.name}» обновлён.')
+    return redirect('projects')
+
+
+@login_required
+def create_project(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        priority = request.POST.get('priority', 'medium')
+        start_date = request.POST.get('start_date') or None
+        end_date = request.POST.get('end_date') or None
+        assigned_id = request.POST.get('assigned_to') or None
+        if name:
+            from django.contrib.auth.models import User as U
+            assigned = U.objects.filter(id=assigned_id).first() if assigned_id else None
+            Project.objects.create(
+                name=name, description=description, priority=priority,
+                start_date=start_date, end_date=end_date, owner=request.user,
+                assigned_to=assigned,
+            )
+            messages.success(request, f'Проект «{name}» создан.')
+        else:
+            messages.error(request, 'Укажите название проекта.')
     return redirect('projects')
 
 
