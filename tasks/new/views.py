@@ -318,16 +318,16 @@ def task_detail(request, task_id):
             messages.success(request, f'Прогресс сохранён: {task.get_progress_display()}')
             return redirect('task_detail', task_id=task.id)
 
-        # === 2. Сохранение связанных задач (уже было — оставил) ===
+        # === ДОБАВЛЕНО: Связанные задачи (полная обработка) ===
         if action == 'related_tasks' or 'related_tasks' in request.POST:
             related_ids = request.POST.getlist('related_tasks')
-            RelatedTask.objects.filter(task=task).delete()
+            RelatedTask.objects.filter(task=task).delete()   # очищаем старые связи
             added = 0
             for rid_str in related_ids:
                 if rid_str:
                     try:
                         rid = int(rid_str)
-                        if rid != task.id:
+                        if rid != task.id:   # нельзя связать задачу саму с собой
                             RelatedTask.objects.get_or_create(task=task, related_id=rid)
                             added += 1
                     except ValueError:
