@@ -287,7 +287,6 @@ def tasks_list(request):
 
 
 # ─── task detail ────────────────────────────────────────────
-
 @login_required
 @require_new_app_db
 def task_detail(request, task_id):
@@ -295,7 +294,6 @@ def task_detail(request, task_id):
         Task.objects.select_related('project', 'assigned_to', 'created_by'),
         id=task_id,
     )
-
     if not _can_access_task(request.user, task):
         messages.error(request, 'Нет доступа к этой задаче.')
         return redirect('tasks')
@@ -303,7 +301,7 @@ def task_detail(request, task_id):
     if request.method == 'POST':
         action = request.POST.get('action')
 
-        # === 1. Только назначенный, создатель или админ могут менять прогресс ===
+        # === 1. Прогресс (оставил как было + добавил красивый текст) ===
         if action == 'progress':
             if not (
                 (task.assigned_to and task.assigned_to.id == request.user.id) or
@@ -312,15 +310,15 @@ def task_detail(request, task_id):
             ):
                 messages.error(request, "Только назначенный исполнитель, создатель задачи или администратор может изменять прогресс.")
                 return redirect('task_detail', task_id=task.id)
-
             old_progress = task.progress
             task.progress = int(request.POST.get('progress', 0) or 0)
             task.save(update_fields=['progress', 'updated_at'])
             _hist(task, request.user, f'обновил(а) прогресс: {old_progress}% → {task.progress}%', 'chart-line')
-            messages.success(request, f'Прогресс сохранён: {task.progress}%')
+            # ←←← ИЗМЕНЕНО: теперь показывает текст вместо просто процентов
+            messages.success(request, f'Прогресс сохранён: {task.get_progress_display()}')
             return redirect('task_detail', task_id=task.id)
 
-        # === 2. Сохранение связанных задач ===
+        # === 2. Сохранение связанных задач (уже было — оставил) ===
         if action == 'related_tasks' or 'related_tasks' in request.POST:
             related_ids = request.POST.getlist('related_tasks')
             RelatedTask.objects.filter(task=task).delete()
@@ -338,7 +336,33 @@ def task_detail(request, task_id):
             messages.success(request, f'Связанные задачи обновлены ({added} шт.).')
             return redirect('task_detail', task_id=task.id)
 
-        # Комментарий
+        # === 3. ДОБАВЛЕНО: Загрузка файла (по желанию) ===
+        if 'file' in request.FILES:
+            uploaded_file = request.FILES['file']
+            TaskFile.objects.create(
+                task=task,
+                uploaded_by=request.user,
+                file=uploaded_file,
+                original_name=uploaded_file.name,
+            )
+            _hist(task, request.user, f'загрузил(а) файл «{uploaded_file.name}»', 'paperclip')
+            messages.success(request, f'Файл «{uploaded_file.name}» успешно загружен.')
+            return redirect('task_detail', task_id=task.id)
+
+        # === 4. ДОБАВЛЕНО: Удаление файла ===
+        if action == 'delete_file':
+            file_id = request.POST.get('file_id')
+            tf = get_object_or_404(TaskFile, id=file_id, task=task)
+            if _is_admin(request.user) or tf.uploaded_by == request.user:
+                name = tf.original_name
+                tf.delete()
+                _hist(task, request.user, f'удалил(а) файл «{name}»', 'trash')
+                messages.success(request, f'Файл «{name}» удалён.')
+            else:
+                messages.error(request, 'Нет прав на удаление файла.')
+            return redirect('task_detail', task_id=task.id)
+
+        # Комментарий (оставил как было)
         if action == 'comment':
             content = request.POST.get('content', '').strip()
             if content:
@@ -347,7 +371,7 @@ def task_detail(request, task_id):
                 messages.success(request, 'Комментарий добавлен.')
             return redirect('task_detail', task_id=task.id)
 
-        # Удаление комментария
+        # Удаление комментария (оставил как было)
         if action == 'delete_comment':
             comment_id = request.POST.get('comment_id')
             comment = get_object_or_404(Comment, id=comment_id, task=task)
@@ -357,28 +381,26 @@ def task_detail(request, task_id):
                 _hist(task, request.user, f'удалил(а) комментарий: «{preview}»', 'trash-alt')
             return redirect('task_detail', task_id=task.id)
 
-    # GET — перезагружаем задачу и рендерим страницу
+    # GET — перезагружаем задачу и рендерим страницу (оставил как было)
     task = get_object_or_404(
         Task.objects.select_related('project', 'assigned_to', 'created_by'),
         id=task_id,
     )
-
     comments = task.comments.select_related('author').order_by('created_at').all()
-
     related_ids = task.related_tasks.values_list('related_id', flat=True)
-    all_users   = User.objects.select_related('profile').all()
+    all_users = User.objects.select_related('profile').all()
     other_tasks = Task.objects.filter(project=task.project).exclude(id=task.id).exclude(id__in=related_ids)
 
     return render(request, 'task_detail.html', {
-        'task':            task,
-        'comments':        comments,
-        'files':           task.files.select_related('uploaded_by').all(),
-        'history':         task.history.select_related('user').all(),
-        'related_tasks':   task.related_tasks.select_related('related').all(),
-        'all_users':       all_users,
-        'other_tasks':     other_tasks,
-        'is_admin':        _is_admin(request.user),
-        'status_choices':  Task.STATUS_CHOICES,
+        'task': task,
+        'comments': comments,
+        'files': task.files.select_related('uploaded_by').all(),
+        'history': task.history.select_related('user').all(),
+        'related_tasks': task.related_tasks.select_related('related').all(),
+        'all_users': all_users,
+        'other_tasks': other_tasks,
+        'is_admin': _is_admin(request.user),
+        'status_choices': Task.STATUS_CHOICES,
         'priority_choices': Task.PRIORITY_CHOICES,
     })
 @login_required
