@@ -295,6 +295,7 @@ def task_detail(request, task_id):
         Task.objects.select_related('project', 'assigned_to', 'created_by'),
         id=task_id,
     )
+
     if not _can_access_task(request.user, task):
         messages.error(request, 'Нет доступа к этой задаче.')
         return redirect('tasks')
@@ -302,13 +303,39 @@ def task_detail(request, task_id):
     if request.method == 'POST':
         action = request.POST.get('action')
 
-        # Прогресс
+        # === 1. Только назначенный, создатель или админ могут менять прогресс ===
         if action == 'progress':
+            if not (
+                (task.assigned_to and task.assigned_to.id == request.user.id) or
+                (task.created_by and task.created_by.id == request.user.id) or
+                _is_admin(request.user)
+            ):
+                messages.error(request, "Только назначенный исполнитель, создатель задачи или администратор может изменять прогресс.")
+                return redirect('task_detail', task_id=task.id)
+
             old_progress = task.progress
             task.progress = int(request.POST.get('progress', 0) or 0)
             task.save(update_fields=['progress', 'updated_at'])
             _hist(task, request.user, f'обновил(а) прогресс: {old_progress}% → {task.progress}%', 'chart-line')
             messages.success(request, f'Прогресс сохранён: {task.progress}%')
+            return redirect('task_detail', task_id=task.id)
+
+        # === 2. Сохранение связанных задач ===
+        if action == 'related_tasks' or 'related_tasks' in request.POST:
+            related_ids = request.POST.getlist('related_tasks')
+            RelatedTask.objects.filter(task=task).delete()
+            added = 0
+            for rid_str in related_ids:
+                if rid_str:
+                    try:
+                        rid = int(rid_str)
+                        if rid != task.id:
+                            RelatedTask.objects.get_or_create(task=task, related_id=rid)
+                            added += 1
+                    except ValueError:
+                        pass
+            _hist(task, request.user, f'обновил(а) связанные задачи ({added} шт.)', 'link')
+            messages.success(request, f'Связанные задачи обновлены ({added} шт.).')
             return redirect('task_detail', task_id=task.id)
 
         # Комментарий
@@ -330,9 +357,7 @@ def task_detail(request, task_id):
                 _hist(task, request.user, f'удалил(а) комментарий: «{preview}»', 'trash-alt')
             return redirect('task_detail', task_id=task.id)
 
-        # Остальные действия (update, delete, upload и т.д.) — оставляем как были
-        # (если хочешь, могу упростить и их тоже)
-
+    # GET — перезагружаем задачу и рендерим страницу
     task = get_object_or_404(
         Task.objects.select_related('project', 'assigned_to', 'created_by'),
         id=task_id,
@@ -354,9 +379,8 @@ def task_detail(request, task_id):
         'other_tasks':     other_tasks,
         'is_admin':        _is_admin(request.user),
         'status_choices':  Task.STATUS_CHOICES,
-        'priority_choices':Task.PRIORITY_CHOICES,
+        'priority_choices': Task.PRIORITY_CHOICES,
     })
-
 @login_required
 @require_new_app_db
 def download_file(request, file_id):
