@@ -1,0 +1,16 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"           # изменил обратно на 8000, чтобы не путаться
+    volumes:
+      - db_data:/app/data
+      - media_data:/app/tasks/media
+    environment:
+      DJANGO_DB_PATH: /app/data/db.sqlite3
+    restart: unless-stopped
+    command: python manage.py runserver 0.0.0.0:8000   # ← это очень важно!
+
+volumes:
+  db_data:
+  media_data:

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
   <head>
@@ -89,7 +90,40 @@
 
       .auth-buttons {
         display: flex;
+        align-items: center;
+        flex-wrap: wrap;
         gap: 12px;
+      }
+
+      .auth-buttons > form {
+        display: inline-flex;
+        margin: 0;
+        align-items: stretch;
+      }
+
+      /* Одинаковая высота и вид у ссылок и кнопок (Профиль / Выход / Вход) */
+      .auth-buttons a.btn,
+      .auth-buttons button.btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        min-height: 2.75rem;
+        padding: 10px 20px;
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.25;
+        border-radius: 5px;
+        margin: 0;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .auth-buttons button.btn-outline {
+        -webkit-appearance: none;
+        appearance: none;
       }
 
       .btn {
@@ -292,10 +326,33 @@
   <body>
     <header class="main-header">
       <div class="container">
+        {% if user.is_authenticated %}
+        <nav class="main-nav">
+          <a href="{% url 'index' %}">Главная</a>
+          <a href="{% url 'projects' %}">Проекты</a>
+          <a href="{% url 'tasks' %}">Задачи</a>
+          <a href="{% url 'workload' %}">Нагрузка</a>
+        </nav>
+        <div class="auth-buttons">
+          <a href="{% url 'profile' %}" class="btn btn-outline">Профиль</a>
+          <form action="{% url 'logout' %}" method="post" class="d-inline">{% csrf_token %}
+            <button type="submit" class="btn btn-outline">Выход</button>
+          </form>
+        </div>
+        {% else %}
         <div class="auth-buttons">
           <a href="{% url 'login' %}" class="btn btn-outline">Вход</a>
-          <a href="{% url 'register' %}" class="btn btn-outline">Регистрация</a>
+          {% if not admin_registered %}
+          <a href="{% url 'register' %}" class="btn btn-outline"
+            >Регистрация администратора</a
+          >
+          {% else %}
+          <a href="{% url 'register' %}" class="btn btn-outline"
+            >Регистрация закрыта</a
+          >
+          {% endif %}
         </div>
+        {% endif %}
       </div>
     </header>
 
@@ -314,7 +371,7 @@
         </div>
         <div class="hero-image">
           <img
-            src="static/images/foto.jpg"
+            src="{% static 'images/foto.svg' %}"
             alt="Управление бизнесом"
             class="img-fluid"
           />
@@ -360,7 +417,7 @@
       <div class="container">
         <div class="footer-content">
           <div class="footer-about">
-            <h3>Это снова мы 😀</h3>
+            <h3>CRM система</h3>
             <p>Инновационная платформа для управления бизнес-процессами</p>
           </div>
 

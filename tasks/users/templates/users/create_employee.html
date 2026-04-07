@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Новый сотрудник</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-dark bg-dark mb-4">
+      <div class="container">
+        <a class="navbar-brand" href="{% url 'projects' %}">
+          <i class="fas fa-arrow-left me-2"></i>К проектам
+        </a>
+      </div>
+    </nav>
+    <div class="container" style="max-width: 640px">
+      <h1 class="h3 mb-3">Добавить сотрудника</h1>
+      <p class="text-muted">
+        Задайте логин и пароль — передайте их сотруднику для входа на страницу
+        «Вход».
+      </p>
+      {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">{{ message }}</div>
+      {% endfor %}
+      {% endif %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %} {% include 'users/_form_bootstrap.html' with form=form %}
+            <button type="submit" class="btn btn-primary">Создать учётную запись</button>
+          </form>
+        </div>
+      </div>
+      {% if employees %}
+      <h2 class="h5">Сотрудники</h2>
+      <ul class="list-group">
+        {% for u in employees %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span>{{ u.profile.display_name }} <small class="text-muted">({{ u.username }})</small></span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </body>
+</html>
