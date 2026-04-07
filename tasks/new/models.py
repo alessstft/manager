@@ -2,14 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-
 class Project(models.Model):
     PRIORITY_CHOICES = [
         ('low', 'Низкий'),
         ('medium', 'Средний'),
         ('high', 'Высокий'),
     ]
-
     name = models.CharField(max_length=200, verbose_name='Название')
     description = models.TextField(blank=True, verbose_name='Описание')
     start_date = models.DateField(null=True, blank=True)
@@ -83,6 +81,17 @@ class Task(models.Model):
 
     def priority_color(self):
         return {'low': 'success', 'medium': 'warning', 'high': 'danger'}.get(self.priority, 'secondary')
+
+    # ←←← ДОБАВЛЕННЫЙ МЕТОД (только это и добавлено)
+    def get_progress_display(self):
+        if self.progress == 0:
+            return 'К выполнению'
+        elif 1 <= self.progress <= 99:
+            return 'В работе'
+        elif self.progress == 100:
+            return 'Выполнено'
+        return f'{self.progress}%'
+    # ←←← КОНЕЦ ДОБАВЛЕНИЯ
 
 
 class RelatedTask(models.Model):
