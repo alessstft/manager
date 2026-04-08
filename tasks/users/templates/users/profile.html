@@ -1,16 +1,92 @@
-{% extends "tasks/index.html" %} {% load crispy_forms_tags %} {% block content
-%}
-<div class="content-section">
-  <div class="media">
-    <img
-      class="rounded-circle account-img"
-      src="{{ user.profile.image.url }}"
-    />
-    <div class="media-body">
-      <h2 class="account-heading">{{ user.username }}</h2>
-      <p class="text-secondary">{{ user.email }}</p>
+{% extends "base.html" %}
+{% block title %}Профиль — Noda{% endblock %}
+
+{% block extra_css %}
+.profile-wrap { max-width:680px; margin:0 auto; }
+.profile-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+
+.profile-hero {
+  background:linear-gradient(145deg, #3e2665, #5b3d8c);
+  padding:28px 32px; display:flex; align-items:center; gap:20px;
+}
+.profile-avatar-wrap { position:relative; flex-shrink:0; }
+.profile-avatar { width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,.4); }
+.profile-hero-info h2 { font-size:1.3rem; font-weight:800; color:#fff; margin-bottom:4px; }
+.profile-role-badge {
+  display:inline-flex; align-items:center; gap:6px; padding:4px 12px;
+  background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25);
+  border-radius:100px; font-size:.78rem; font-weight:600; color:#fff;
+}
+
+.profile-body { padding:28px 32px; }
+.form-section-title {
+  font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;
+  color:var(--text-muted); margin-bottom:14px;
+}
+.section-divider { height:1px; background:var(--border); margin:24px 0; }
+
+/* override generic form-control to look right in profile context */
+.profile-body .form-control { font-size:.9rem; }
+{% endblock %}
+
+{% block content %}
+<div class="profile-wrap">
+  <div class="profile-card">
+    <div class="profile-hero">
+      <div class="profile-avatar-wrap">
+        {% if profile.image %}
+          <img src="{{ profile.image.url }}" alt="" class="profile-avatar"/>
+        {% else %}
+          <img src="https://ui-avatars.com/api/?name={{ profile.display_name|urlencode }}&size=128&background=ffffff&color=5b3d8c" alt="" class="profile-avatar"/>
+        {% endif %}
+      </div>
+      <div class="profile-hero-info">
+        <h2>{{ profile.display_name }}</h2>
+        <span class="profile-role-badge">
+          <i class="fas fa-{% if profile.role == 'admin' %}crown{% else %}user{% endif %}"></i>
+          {{ profile.get_role_display }}
+        </span>
+        <div style="margin-top:8px;font-size:.8rem;color:rgba(255,255,255,.6)">Имя и фото обновляются после сохранения</div>
+      </div>
+    </div>
+
+    <div class="profile-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div class="form-section-title">Личные данные</div>
+        {% for field in u_form %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <input type="{{ field.field.widget.input_type|default:'text' }}"
+                 id="{{ field.id_for_label }}"
+                 name="{{ field.html_name }}"
+                 value="{{ field.value|default:'' }}"
+                 class="form-control"
+                 {% if field.field.required %}required{% endif %}
+                 {% if field.field.max_length %}maxlength="{{ field.field.max_length }}"{% endif %} />
+          {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+          {% for err in field.errors %}<div class="form-error">{{ err }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="section-divider"></div>
+
+        <div class="form-section-title">Фото профиля</div>
+        {% for field in p_form %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+          {% for err in field.errors %}<div class="form-error">{{ err }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+
+        <div style="margin-top:8px">
+          <button type="submit" class="btn btn-primary"><i class="far fa-save"></i>Сохранить изменения</button>
+        </div>
+      </form>
     </div>
   </div>
-  <!-- Здесь будет форма -->
 </div>
-{% endblock content %}
+{% endblock %}

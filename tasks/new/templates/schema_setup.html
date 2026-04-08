@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Нужно обновить базу данных</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  </head>
+  <body class="bg-light">
+    <div class="container py-5" style="max-width: 640px">
+      <h1 class="h4 mb-3">В базе нет таблиц проектов и задач</h1>
+      <p class="text-muted mb-2">
+        Для сотрудника список проектов строится через связь «участники» — таблица
+        <code>new_project_members</code>. Также нужны <code>new_project</code>,
+        <code>new_task</code> и остальные таблицы приложения <strong>new</strong>.
+        Обычно они создаются одной командой миграций.
+      </p>
+      <p class="text-muted small">
+        Запускайте команды из папки, где лежит <code>manage.py</code>
+        (<code>manager\tasks</code>), и тем же Python, что и для <code>runserver</code>.
+      </p>
+      {% if sqlite_path %}
+      <p class="small"><strong>Файл SQLite:</strong> <code>{{ sqlite_path }}</code></p>
+      {% endif %}
+      <div class="card shadow-sm my-4">
+        <div class="card-body">
+          <p class="mb-2 fw-semibold">В PowerShell:</p>
+          <pre class="bg-dark text-light p-3 rounded small mb-0"><code>cd C:\Users\Artem\OneDrive\Desktop\str\manager\tasks
+python manage.py migrate</code></pre>
+        </div>
+      </div>
+      <p class="small text-muted mb-3">
+        Если пишет «No migrations to apply», а страницы всё равно падают — файл
+        <code>db.sqlite3</code> остался от <strong>старой версии</strong> проекта (например, были таблицы вроде
+        <code>new_post</code>, но нет <code>new_project_members</code>). Единственный надёжный способ —
+        <strong>удалить</strong> <code>db.sqlite3</code> в папке с <code>manage.py</code> и выполнить
+        <code>python manage.py migrate</code> заново (все данные в БД пропадут). Затем снова зарегистрируйте
+        администратора и сотрудников.
+      </p>
+      <a href="{% url 'index' %}" class="btn btn-outline-secondary">На главную</a>
+    </div>
+  </body>
+</html>

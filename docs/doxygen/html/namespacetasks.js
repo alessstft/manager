@@ -1,0 +1,48 @@
+var namespacetasks =
+[
+    [ "asgi", "namespacetasks_1_1asgi.html", [
+      [ "application", "namespacetasks_1_1asgi.html#a29e66e29336296104dd6a82f38b04591", null ]
+    ] ],
+    [ "settings", "namespacetasks_1_1settings.html", [
+      [ "_static_candidates", "namespacetasks_1_1settings.html#ac6710e0c9226c584c25161c81f49869c", null ],
+      [ "ADMIN_URL", "namespacetasks_1_1settings.html#a8d0d5089ab1bf1403af510cf749a521a", null ],
+      [ "ALLOWED_HOSTS", "namespacetasks_1_1settings.html#aa43343dfb77ee0a6f4f271d576c4dfc1", null ],
+      [ "APPEND_SLASH", "namespacetasks_1_1settings.html#a0472a877b3e65af849535d61aaf26f11", null ],
+      [ "AUTH_PASSWORD_VALIDATORS", "namespacetasks_1_1settings.html#ae33dfe391ee00de7543bd9cde266a77c", null ],
+      [ "BASE_DIR", "namespacetasks_1_1settings.html#a830685112052df2147d7066d7de04435", null ],
+      [ "CSRF_COOKIE_HTTPONLY", "namespacetasks_1_1settings.html#a92cbafd54f8e291f61f02586e3b84b93", null ],
+      [ "CSRF_COOKIE_SECURE", "namespacetasks_1_1settings.html#a320fb6e3da7dc69e76f11563c946edf4", null ],
+      [ "CSRF_FAILURE_VIEW", "namespacetasks_1_1settings.html#afb26265e3f04ca00dbfea42cd606eef5", null ],
+      [ "CSRF_TRUSTED_ORIGINS", "namespacetasks_1_1settings.html#a170cf8b69e5da5fadc76f763df667a11", null ],
+      [ "CSRF_USE_SESSIONS", "namespacetasks_1_1settings.html#a865d06fc3126268cd91b21d73332f43d", null ],
+      [ "DATABASES", "namespacetasks_1_1settings.html#a16003159b81bbd87a16843fd3484e3a5", null ],
+      [ "DEBUG", "namespacetasks_1_1settings.html#aa7846fd5a7f21baad551b9534625067c", null ],
+      [ "DEFAULT_AUTO_FIELD", "namespacetasks_1_1settings.html#a54b2832cb9fd347ee556fcc96a42b64f", null ],
+      [ "INSTALLED_APPS", "namespacetasks_1_1settings.html#a63b4bb2adf80c13a1b1f216ce6aa1725", null ],
+      [ "LANGUAGE_CODE", "namespacetasks_1_1settings.html#a23edc5eed12ebd9cb8c18356c4180bd6", null ],
+      [ "LOGIN_REDIRECT_URL", "namespacetasks_1_1settings.html#ac5f93c7228732c8ee88816e44a4c1480", null ],
+      [ "LOGIN_URL", "namespacetasks_1_1settings.html#a8661920650d1d651d872f844f04ced6a", null ],
+      [ "MEDIA_ROOT", "namespacetasks_1_1settings.html#a57fe129c23002c52f516907fdc4c581d", null ],
+      [ "MEDIA_URL", "namespacetasks_1_1settings.html#afa5cf8d6cb10231e7c1bebc18021a2ca", null ],
+      [ "MIDDLEWARE", "namespacetasks_1_1settings.html#ab011bb87e2345855babe209802b803a7", null ],
+      [ "ROOT_URLCONF", "namespacetasks_1_1settings.html#ad571557408c59b15c083a159b43eed4d", null ],
+      [ "SECRET_KEY", "namespacetasks_1_1settings.html#a9ea3a98999d04f3761e03639619945b8", null ],
+      [ "STATIC_ROOT", "namespacetasks_1_1settings.html#a507294aee5115f8f5d8a59804d3b8b8a", null ],
+      [ "STATIC_URL", "namespacetasks_1_1settings.html#ab35f12b1b72f469407af5846db71c3ea", null ],
+      [ "STATICFILES_DIRS", "namespacetasks_1_1settings.html#afe4e49662329bdefc2f26bfbf6aebf35", null ],
+      [ "TEMPLATES", "namespacetasks_1_1settings.html#a6bdc3b6328f3b58456b7b4cbcba6247e", null ],
+      [ "TIME_ZONE", "namespacetasks_1_1settings.html#a2b9cab0802e87bee4c1234359e018073", null ],
+      [ "USE_I18N", "namespacetasks_1_1settings.html#a94220b8175e7581d8e7a016cbca09c0c", null ],
+      [ "USE_TZ", "namespacetasks_1_1settings.html#a7a58e95eeb49bde623d7a2dbdcda3738", null ],
+      [ "WSGI_APPLICATION", "namespacetasks_1_1settings.html#add9804a82ecdc2c999be0b2c2e98d860", null ]
+    ] ],
+    [ "urls", "namespacetasks_1_1urls.html", [
+      [ "document_root", "namespacetasks_1_1urls.html#a7c663f6f34bf19751eda60f0ea59b847", null ],
+      [ "MEDIA_URL", "namespacetasks_1_1urls.html#aa2fc972b444356d42f356192f067c07c", null ],
+      [ "STATIC_URL", "namespacetasks_1_1urls.html#a989f70fda125a5a64701ab70cae4c931", null ],
+      [ "urlpatterns", "namespacetasks_1_1urls.html#a184a7f7261d83bdc424704fcbb2e5ee8", null ]
+    ] ],
+    [ "wsgi", "namespacetasks_1_1wsgi.html", [
+      [ "application", "namespacetasks_1_1wsgi.html#a928ba286c9f99b46925fb74c7f123262", null ]
+    ] ]
+];

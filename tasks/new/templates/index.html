@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
   <head>
@@ -5,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Управление бизнесом</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link
@@ -14,317 +15,572 @@
     />
     <style>
       :root {
-        --primary-color: #46344e;
-        --secondary-color: #9b786f;
-        --accent-color: #4895ef;
-        --dark-color: #2b2d42;
-        --light-color: #46344e;
-        --text-color: #333;
-        --text-light: #9b786f;
-        --white: #9d8d8fc6;
+        --primary:      #5b3d8c;   /* deep violet */
+        --primary-dark: #3e2665;
+        --primary-light:#7c5ab8;
+        --accent:       #f5a623;   /* warm amber */
+        --bg:           #f7f6fb;   /* almost-white with subtle violet tint */
+        --surface:      #ffffff;
+        --text-primary: #1a1329;
+        --text-secondary:#5a5470;
+        --text-muted:   #9b95b0;
+        --border:       #e4dfef;
+        --shadow-sm:    0 1px 3px rgba(91,61,140,.08), 0 1px 2px rgba(0,0,0,.06);
+        --shadow-md:    0 4px 16px rgba(91,61,140,.12);
+        --shadow-lg:    0 12px 40px rgba(91,61,140,.18);
+        --radius:       12px;
+        --radius-lg:    20px;
+        --transition:   0.25s cubic-bezier(.4,0,.2,1);
       }
 
-      * {
+      *, *::before, *::after {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
 
+      html { scroll-behavior: smooth; }
+
       body {
-        font-family: "Montserrat", sans-serif;
-        color: var(--text-color);
+        font-family: "Inter", sans-serif;
+        color: var(--text-primary);
+        background-color: var(--bg);
         line-height: 1.6;
-        background-color: var(--white);
+        -webkit-font-smoothing: antialiased;
       }
 
       .container {
         width: 100%;
-        max-width: 1200px;
+        max-width: 1180px;
         margin: 0 auto;
-        padding: 0 20px;
+        padding: 0 24px;
       }
 
+      /* ─── HEADER ─────────────────────────────────────────── */
       .main-header {
-        background-color: var(--white);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        padding: 15px 0;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        padding: 0;
         position: fixed;
         width: 100%;
         top: 0;
         z-index: 1000;
+        transition: box-shadow var(--transition);
       }
-
-      .btn-container {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        padding: 0 15px;
-        margin-top: 20px;
-      }
-
       .main-header .container {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        height: 64px;
       }
+
+      .logo {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: -.3px;
+      }
+      .logo i { font-size: 1.1rem; color: var(--accent); }
 
       .main-nav {
         display: flex;
-        gap: 20px;
+        gap: 4px;
       }
-
       .main-nav a {
         text-decoration: none;
-        color: var(--text-color);
+        color: var(--text-secondary);
         font-weight: 500;
-        transition: color 0.3s ease;
-        padding: 8px 12px;
-        border-radius: 4px;
+        font-size: .93rem;
+        padding: 8px 14px;
+        border-radius: 8px;
+        transition: color var(--transition), background var(--transition);
       }
-
       .main-nav a:hover {
-        color: var(--primary-color);
-        background-color: rgba(67, 97, 238, 0.05);
+        color: var(--primary);
+        background: rgba(91,61,140,.07);
       }
 
       .auth-buttons {
         display: flex;
-        gap: 12px;
+        align-items: center;
+        gap: 8px;
+      }
+      .auth-buttons > form {
+        display: inline-flex;
+        margin: 0;
+        align-items: stretch;
       }
 
+      /* ─── BUTTONS ─────────────────────────────────────────── */
       .btn {
-        display: inline-block;
-        padding: 10px 20px;
-        border-radius: 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 9px 20px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: .9rem;
+        font-weight: 600;
+        line-height: 1.2;
         text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        transition: all var(--transition);
+        white-space: nowrap;
       }
-
       .btn-primary {
-        background-color: var(--primary-color);
-        color: var(--white);
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(91,61,140,.35);
       }
-
       .btn-primary:hover {
-        background-color: var(--secondary-color);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.2);
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(91,61,140,.4);
       }
+      .btn-primary:active { transform: translateY(0); }
 
       .btn-outline {
-        border: 2px solid var(--primary-color);
-        color: var(--primary-color);
-        background-color: transparent;
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--text-primary);
       }
-
       .btn-outline:hover {
-        background-color: var(--primary-color);
-        color: var(--white);
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(91,61,140,.05);
       }
 
+      .btn-ghost {
+        background: transparent;
+        color: var(--text-secondary);
+        border: none;
+      }
+      .btn-ghost:hover {
+        color: var(--primary);
+        background: rgba(91,61,140,.07);
+      }
+
+      .btn-lg {
+        padding: 14px 32px;
+        font-size: 1rem;
+        border-radius: 10px;
+      }
+      .btn-hero {
+        background: #fff;
+        color: var(--primary);
+        font-size: 1rem;
+        padding: 14px 32px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.15);
+      }
+      .btn-hero:hover {
+        background: rgba(255,255,255,.92);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,.2);
+      }
+
+      /* ─── HERO ────────────────────────────────────────────── */
       .hero {
-        padding: 150px 0 80px;
-        background: linear-gradient(135deg, #46344e 0%, #9d8d8f 100%);
+        padding: 120px 0 80px;
+        background: linear-gradient(145deg, #3e2665 0%, #5b3d8c 45%, #7c5ab8 100%);
+        position: relative;
+        overflow: hidden;
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 400px; height: 400px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.05);
+        pointer-events: none;
+      }
+      .hero::after {
+        content: '';
+        position: absolute;
+        bottom: -80px; left: -40px;
+        width: 300px; height: 300px;
+        border-radius: 50%;
+        background: rgba(245,166,35,.08);
+        pointer-events: none;
       }
 
       .hero .container {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 40px;
+        gap: 48px;
+        position: relative;
+        z-index: 1;
       }
 
-      .hero-content {
-        flex: 1;
+      .hero-content { flex: 1; }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        color: #fff;
+        font-size: .82rem;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 100px;
+        margin-bottom: 24px;
+        letter-spacing: .3px;
       }
+      .hero-badge i { color: var(--accent); font-size: .75rem; }
 
       .hero h1 {
-        font-size: 2.5rem;
+        font-size: 3rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.15;
         margin-bottom: 20px;
-        line-height: 1.2;
+        letter-spacing: -.5px;
+      }
+      .hero h1 span {
+        color: var(--accent);
       }
 
       .hero p {
-        font-size: 1.2rem;
-        color: var(--text-light);
-        margin-bottom: 30px;
+        font-size: 1.1rem;
+        color: rgba(255,255,255,.78);
+        margin-bottom: 36px;
+        max-width: 480px;
+        line-height: 1.7;
       }
+
+      .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
 
       .hero-image {
         flex: 1;
         text-align: center;
+        max-width: 460px;
       }
-
       .hero-image img {
         max-width: 100%;
         height: auto;
-        border-radius: 10px;
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        filter: drop-shadow(0 20px 40px rgba(0,0,0,.25));
       }
 
+      /* ─── STATS BAR ───────────────────────────────────────── */
+      .stats-bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+      .stats-bar .container {
+        display: flex;
+        justify-content: space-around;
+        padding-top: 28px;
+        padding-bottom: 28px;
+      }
+      .stat-item { text-align: center; }
+      .stat-value {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: var(--primary);
+        letter-spacing: -.5px;
+      }
+      .stat-label {
+        font-size: .82rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-top: 2px;
+      }
+
+      /* ─── FEATURES ────────────────────────────────────────── */
       .features {
-        padding: 80px 0;
+        padding: 96px 0;
+        background: var(--bg);
       }
 
+      .section-eyebrow {
+        display: block;
+        text-align: center;
+        font-size: .8rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--primary);
+        margin-bottom: 12px;
+      }
       .section-title {
         text-align: center;
-        margin-bottom: 50px;
         font-size: 2rem;
-        position: relative;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+        letter-spacing: -.4px;
       }
-
-      .section-title::after {
-        content: "";
-        display: block;
-        width: 60px;
-        height: 3px;
-        background-color: var(--primary-color);
-        margin: 15px auto 0;
+      .section-subtitle {
+        text-align: center;
+        font-size: 1rem;
+        color: var(--text-secondary);
+        max-width: 520px;
+        margin: 0 auto 56px;
+        line-height: 1.7;
       }
 
       .features-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
+        gap: 24px;
       }
 
       .feature-card {
-        background-color: var(--white);
-        border-radius: 10px;
-        padding: 30px;
-        text-align: center;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        transition: transform 0.3s ease;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 36px 32px;
+        transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+        position: relative;
+        overflow: hidden;
       }
-
+      .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        opacity: 0;
+        transition: opacity var(--transition);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
       .feature-card:hover {
-        transform: translateY(-10px);
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-lg);
+        border-color: rgba(91,61,140,.2);
       }
+      .feature-card:hover::before { opacity: 1; }
 
       .feature-icon {
-        width: 70px;
-        height: 70px;
-        background-color: rgba(219, 94, 52, 0.1);
-        border-radius: 50%;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, rgba(91,61,140,.12), rgba(91,61,140,.05));
+        border-radius: 14px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 20px;
-        color: var(--primary-color);
-        font-size: 1.5rem;
-      }
-
-      .feature-card h3 {
-        margin-bottom: 15px;
+        color: var(--primary);
         font-size: 1.3rem;
       }
-
-      .main-footer {
-        background-color: var(--dark-color);
-        color: var(--white);
-        padding: 50px 0 20px;
+      .feature-card h3 {
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -.2px;
+      }
+      .feature-card p {
+        font-size: .9rem;
+        color: var(--text-secondary);
+        line-height: 1.65;
       }
 
+      /* ─── CTA SECTION ─────────────────────────────────────── */
+      .cta-section {
+        padding: 80px 0;
+        background: linear-gradient(145deg, #3e2665, #5b3d8c);
+        text-align: center;
+      }
+      .cta-section h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 16px;
+        letter-spacing: -.4px;
+      }
+      .cta-section p {
+        font-size: 1rem;
+        color: rgba(255,255,255,.72);
+        margin-bottom: 32px;
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.7;
+      }
+
+      /* ─── FOOTER ──────────────────────────────────────────── */
+      .main-footer {
+        background: var(--text-primary);
+        color: rgba(255,255,255,.75);
+        padding: 56px 0 24px;
+      }
       .footer-content {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 40px;
+        grid-template-columns: 2fr 1fr;
+        gap: 48px;
         margin-bottom: 40px;
       }
-
-      .footer-about p {
-        color: #adb5bd;
-        margin-top: 15px;
+      .footer-logo {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
-
+      .footer-logo i { color: var(--accent); }
+      .footer-about p { font-size: .9rem; line-height: 1.7; max-width: 340px; }
       .footer-links h4 {
-        margin-bottom: 20px;
-        font-size: 1.1rem;
+        font-size: .85rem;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 16px;
       }
-
       .footer-links a {
         display: block;
-        color: #adb5bd;
+        color: rgba(255,255,255,.6);
         margin-bottom: 10px;
         text-decoration: none;
-        transition: color 0.3s ease;
+        font-size: .9rem;
+        transition: color var(--transition);
       }
-
-      .footer-links a:hover {
-        color: var(--white);
-      }
-
+      .footer-links a:hover { color: #fff; }
       .footer-bottom {
         text-align: center;
-        padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        font-size: 0.9rem;
-        color: #adb5bd;
+        padding-top: 24px;
+        border-top: 1px solid rgba(255,255,255,.1);
+        font-size: .82rem;
+        color: rgba(255,255,255,.4);
       }
 
+      /* ─── RESPONSIVE ──────────────────────────────────────── */
       @media (max-width: 768px) {
-        .hero .container {
-          flex-direction: column;
-          text-align: center;
-        }
+        .hero { padding: 100px 0 60px; }
+        .hero .container { flex-direction: column; text-align: center; }
+        .hero h1 { font-size: 2.1rem; }
+        .hero p { font-size: 1rem; }
+        .hero-cta { justify-content: center; }
+        .hero-image { display: none; }
 
-        .main-header .container {
-          flex-direction: column;
-          gap: 15px;
-        }
+        .main-header .container { gap: 12px; }
+        .main-nav { display: none; }
 
-        .main-nav {
-          flex-wrap: wrap;
-          justify-content: center;
-        }
+        .stats-bar .container { gap: 8px; flex-wrap: wrap; }
+        .stat-item { min-width: 120px; }
 
-        .hero {
-          padding: 120px 0 60px;
-        }
-
-        .hero h1 {
-          font-size: 2rem;
-        }
+        .features-grid { grid-template-columns: 1fr; }
+        .footer-content { grid-template-columns: 1fr; gap: 32px; }
       }
     </style>
   </head>
   <body>
+
+    <!-- ─── HEADER ─────────────────────────────────────────── -->
     <header class="main-header">
       <div class="container">
+        <a href="{% url 'index' %}" class="logo">
+          <i class="fas fa-layer-group"></i>
+          Noda
+        </a>
+
+        {% if user.is_authenticated %}
+        <nav class="main-nav">
+          <a href="{% url 'index' %}">Главная</a>
+          <a href="{% url 'projects' %}">Проекты</a>
+          <a href="{% url 'tasks' %}">Задачи</a>
+          <a href="{% url 'workload' %}">Нагрузка</a>
+        </nav>
         <div class="auth-buttons">
-          <a href="{% url 'login' %}" class="btn btn-outline">Вход</a>
-          <a href="{% url 'register' %}" class="btn btn-outline">Регистрация</a>
+          <a href="{% url 'profile' %}" class="btn btn-outline">
+            <i class="fas fa-user"></i> Профиль
+          </a>
+          <form action="{% url 'logout' %}" method="post">{% csrf_token %}
+            <button type="submit" class="btn btn-ghost">
+              <i class="fas fa-sign-out-alt"></i> Выход
+            </button>
+          </form>
         </div>
+        {% else %}
+        <div class="auth-buttons">
+          <a href="{% url 'login' %}" class="btn btn-outline">Войти</a>
+          {% if not admin_registered %}
+          <a href="{% url 'register' %}" class="btn btn-primary">Регистрация</a>
+          {% else %}
+          <a href="{% url 'register' %}" class="btn btn-outline" style="opacity:.5;pointer-events:none;">Регистрация закрыта</a>
+          {% endif %}
+        </div>
+        {% endif %}
       </div>
     </header>
 
+    <!-- ─── HERO ────────────────────────────────────────────── -->
     <section class="hero">
       <div class="container">
         <div class="hero-content">
-          <h1>Эффективное управление бизнес-проектами</h1>
+          <div class="hero-badge">
+            <i class="fas fa-bolt"></i>
+            Управление бизнес-проектами
+          </div>
+          <h1>
+            Все задачи команды —<br>
+            <span>в одном месте</span>
+          </h1>
           <p>
-            Все инструменты для организации работы вашей команды в одном месте
+            Организуйте проекты, назначайте задачи и отслеживайте прогресс
+            в реальном времени. Просто и эффективно.
           </p>
-          <div class="cta-buttons">
-            <a href="{% url 'login' %}" class="btn btn-primary"
-              >Начать бесплатно</a
-            >
+          <div class="hero-cta">
+            <a href="{% url 'login' %}" class="btn btn-hero">
+              <i class="fas fa-arrow-right"></i>
+              Войти в систему
+            </a>
           </div>
         </div>
         <div class="hero-image">
           <img
-            src="static/images/foto.jpg"
+            src="{% static 'images/foto.svg' %}"
             alt="Управление бизнесом"
-            class="img-fluid"
           />
         </div>
       </div>
     </section>
 
+    <!-- ─── STATS BAR ─────────────────────────────────────── -->
+    <div class="stats-bar">
+      <div class="container">
+        <div class="stat-item">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Контроль задач</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">∞</div>
+          <div class="stat-label">Проектов</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Роли доступа</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Лишних шагов</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── FEATURES ─────────────────────────────────────── -->
     <section class="features">
       <div class="container">
+        <span class="section-eyebrow">Возможности</span>
         <h2 class="section-title">Почему выбирают нас?</h2>
+        <p class="section-subtitle">
+          Инструменты, которые помогают команде работать слаженно — от постановки задач до финального результата.
+        </p>
         <div class="features-grid">
           <div class="feature-card">
             <div class="feature-icon">
@@ -332,51 +588,70 @@
             </div>
             <h3>Управление проектами</h3>
             <p>
-              Организуйте проекты любой сложности с помощью интуитивных
-              инструментов
+              Создавайте проекты, добавляйте участников и следите за ходом
+              работ — всё через понятный интерфейс.
             </p>
           </div>
-
           <div class="feature-card">
             <div class="feature-icon">
               <i class="fas fa-tasks"></i>
             </div>
             <h3>Контроль задач</h3>
-            <p>Назначайте, отслеживайте и анализируйте выполнение задач</p>
+            <p>
+              Назначайте задачи сотрудникам, устанавливайте сроки, оставляйте
+              комментарии и загружайте файлы.
+            </p>
           </div>
-
           <div class="feature-card">
             <div class="feature-icon">
               <i class="fas fa-chart-line"></i>
             </div>
-            <h3>Бизнес-аналитика</h3>
-            <p>Получайте детальные отчеты о продуктивности вашей команды</p>
+            <h3>Аналитика нагрузки</h3>
+            <p>
+              Видите реальную нагрузку каждого сотрудника и вовремя
+              перераспределяйте работу в команде.
+            </p>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- ─── CTA ──────────────────────────────────────────── -->
+    <section class="cta-section">
+      <div class="container">
+        <h2>Готовы начать?</h2>
+        <p>Войдите в систему и начните управлять проектами прямо сейчас.</p>
+        <a href="{% url 'login' %}" class="btn btn-hero btn-lg">
+          <i class="fas fa-sign-in-alt"></i>
+          Войти
+        </a>
+      </div>
+    </section>
+
+    <!-- ─── FOOTER ────────────────────────────────────────── -->
     <footer class="main-footer">
       <div class="container">
         <div class="footer-content">
           <div class="footer-about">
-            <h3>Это снова мы 😀</h3>
-            <p>Инновационная платформа для управления бизнес-процессами</p>
+            <div class="footer-logo">
+              <i class="fas fa-layer-group"></i>
+              Noda
+            </div>
+            <p>Инновационная платформа для управления бизнес-процессами вашей компании.</p>
           </div>
-
           <div class="footer-links">
             <h4>Ресурсы</h4>
-            <a
-              href="https://github.com/alessstft/web-applications-for-project/blob/master/README.md"
-              >Описание</a
-            >
+            <a href="https://github.com/alessstft/web-applications-for-project/blob/master/README.md">
+              Описание проекта
+            </a>
             <a href="https://github.com/alessstft/manager/wiki">Документация</a>
-            <a href="https://www.prikolmix.ru/upload/000/u5/7/b/9cb93ea9.jpg"
-              >Поддержка</a
-            >
           </div>
+        </div>
+        <div class="footer-bottom">
+          Noda — Система управления проектами
         </div>
       </div>
     </footer>
+
   </body>
 </html>

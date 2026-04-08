@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Новый сотрудник — Noda{% endblock %}
+
+{% block extra_css %}
+.employee-layout { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; max-width:960px; }
+.form-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+.form-card-header { padding:18px 24px; border-bottom:1px solid var(--border); }
+.form-card-header h2 { font-size:1.1rem; font-weight:700; color:var(--text-primary); }
+.form-card-header p { font-size:.82rem; color:var(--text-muted); margin-top:4px; }
+.form-card-body { padding:24px; }
+
+.employee-list { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); }
+.elist-header { padding:16px 20px; border-bottom:1px solid var(--border); font-size:.875rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:8px; }
+.elist-item { display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid var(--border); }
+.elist-item:last-child { border-bottom:none; }
+.elist-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.elist-name { font-size:.875rem; font-weight:600; color:var(--text-primary); }
+.elist-login { font-size:.78rem; color:var(--text-muted); }
+.elist-empty { padding:24px 20px; font-size:.875rem; color:var(--text-muted); text-align:center; }
+
+@media(max-width:768px){ .employee-layout{grid-template-columns:1fr;} }
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px">
+  <a href="{% url 'projects' %}" class="btn btn-ghost btn-sm"><i class="fas fa-arrow-left"></i>К проектам</a>
+</div>
+
+<div class="employee-layout">
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <h2><i class="fas fa-user-plus" style="color:var(--primary);margin-right:8px"></i>Добавить сотрудника</h2>
+      <p>Задайте логин и пароль — передайте их сотруднику для входа.</p>
+    </div>
+    <div class="form-card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i><span>{{ form.non_field_errors }}</span></div>
+        {% endif %}
+        {% for field in form %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <input type="{{ field.field.widget.input_type|default:'text' }}"
+                 id="{{ field.id_for_label }}"
+                 name="{{ field.html_name }}"
+                 value="{{ field.value|default:'' }}"
+                 class="form-control"
+                 {% if field.field.required %}required{% endif %}
+                 {% if field.field.max_length %}maxlength="{{ field.field.max_length }}"{% endif %}
+                 autocomplete="off" />
+          {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+          {% for err in field.errors %}<div class="form-error">{{ err }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary btn-w100"><i class="fas fa-user-plus"></i>Создать учётную запись</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Employee list -->
+  <div class="employee-list">
+    <div class="elist-header">
+      <i class="fas fa-users" style="color:var(--primary)"></i>
+      Сотрудники
+      {% if employees %}<span style="background:var(--primary-faint);color:var(--primary);font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:100px">{{ employees|length }}</span>{% endif %}
+    </div>
+    {% if employees %}
+      {% for u in employees %}
+      <div class="elist-item">
+        <img src="https://ui-avatars.com/api/?name={{ u.profile.display_name|urlencode }}&size=64&background=5b3d8c&color=fff" class="elist-avatar"/>
+        <div>
+          <div class="elist-name">{{ u.profile.display_name }}</div>
+          <div class="elist-login">@{{ u.username }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="elist-empty">Сотрудников пока нет.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

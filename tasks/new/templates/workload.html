@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Нагрузка — Noda{% endblock %}
+
+{% block extra_css %}
+.page-hero {
+  background:linear-gradient(145deg, #3e2665, #5b3d8c);
+  border-radius:var(--radius-lg); padding:24px 28px; margin-bottom:24px;
+}
+.page-hero h1 { font-size:1.4rem; font-weight:800; color:#fff; margin-bottom:6px; }
+.page-hero p  { font-size:.875rem; color:rgba(255,255,255,.72); margin:0; }
+
+.section-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:24px; overflow:hidden; }
+.section-card-header {
+  display:flex; align-items:center; gap:10px; padding:16px 20px;
+  border-bottom:1px solid var(--border); font-size:.875rem; font-weight:600; color:var(--text-primary);
+}
+.section-card-header i { color:var(--primary); }
+
+/* table */
+.data-table { width:100%; border-collapse:collapse; }
+.data-table th {
+  padding:10px 16px; background:var(--bg); border-bottom:1px solid var(--border);
+  font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
+  color:var(--text-muted); text-align:left; white-space:nowrap;
+}
+.data-table td { padding:12px 16px; border-bottom:1px solid var(--border); font-size:.875rem; vertical-align:top; }
+.data-table tr:last-child td { border-bottom:none; }
+.data-table tr:hover td { background:var(--bg); }
+
+.employee-name { font-weight:600; color:var(--text-primary); }
+.role-chip { font-size:.72rem; color:var(--text-muted); }
+.count-cell { text-align:center; font-weight:700; }
+.overdue-count { color:var(--danger); font-weight:700; }
+
+/* task mini-list */
+.task-mini { margin:0; padding:0; list-style:none; }
+.task-mini-item { padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid var(--border); }
+.task-mini-item:last-child { padding-bottom:0; margin-bottom:0; border-bottom:none; }
+.task-mini-title { text-decoration:none; font-size:.82rem; font-weight:600; color:var(--primary); }
+.task-mini-title:hover { text-decoration:underline; }
+.task-mini-meta { font-size:.75rem; color:var(--text-muted); margin-top:2px; }
+
+/* progress bar */
+.mini-prog { height:4px; border-radius:2px; background:var(--border); margin-top:4px; overflow:hidden; }
+.mini-prog-fill { height:100%; border-radius:2px; background:var(--primary); }
+
+.load-bar-wrap { display:flex; align-items:center; gap:8px; }
+.load-bar { flex:1; height:6px; border-radius:3px; background:var(--border); overflow:hidden; }
+.load-bar-fill { height:100%; border-radius:3px; background:var(--primary); transition:width .4s; }
+.load-pct { font-size:.78rem; color:var(--text-muted); white-space:nowrap; min-width:32px; text-align:right; }
+
+.late-badge { display:inline-flex; align-items:center; padding:3px 8px; border-radius:100px; font-size:.72rem; font-weight:700; background:var(--danger-faint); color:var(--danger); }
+
+.empty-msg { padding:24px 20px; font-size:.875rem; color:var(--text-muted); }
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <h1><i class="fas fa-chart-bar" style="margin-right:10px;color:var(--accent)"></i>Нагрузка и задержки</h1>
+  <p>
+    Данные на {{ today|date:"d.m.Y" }}.
+    {% if is_admin %}По всем пользователям с профилем.{% else %}Ваши назначенные задачи — статус и прогресс.{% endif %}
+  </p>
+</div>
+
+<!-- Workload table -->
+<div class="section-card">
+  <div class="section-card-header">
+    <i class="fas fa-briefcase"></i>
+    Объём работы — незавершённые назначенные задачи
+  </div>
+  {% if employee_rows %}
+  <div style="overflow-x:auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Сотрудник</th>
+          <th style="text-align:center">Активных</th>
+          <th style="text-align:center">Просрочено</th>
+          <th style="text-align:center">Ср. прогресс</th>
+          <th style="min-width:280px">Задачи</th>
+          <th style="min-width:180px">Загрузка</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in employee_rows %}
+        <tr>
+          <td>
+            <div class="employee-name">{{ row.name }}</div>
+            <div class="role-chip">{{ row.role_label }}</div>
+          </td>
+          <td class="count-cell">{{ row.active_count }}</td>
+          <td class="count-cell">
+            {% if row.overdue_count %}
+              <span class="overdue-count">{{ row.overdue_count }}</span>
+            {% else %}
+              <span style="color:var(--text-muted)">0</span>
+            {% endif %}
+          </td>
+          <td class="count-cell">{{ row.avg_progress }}%</td>
+          <td>
+            {% if row.active_tasks %}
+            <ul class="task-mini">
+              {% for t in row.active_tasks %}
+              <li class="task-mini-item">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+                  <a href="{% url 'task_detail' t.id %}" class="task-mini-title">{{ t.title }}</a>
+                  <span class="badge badge-{{ t.status }}" style="font-size:.65rem">{{ t.get_status_display }}</span>
+                  <span class="badge badge-{{ t.priority }}" style="font-size:.65rem">{{ t.get_priority_display }}</span>
+                </div>
+                <div class="task-mini-meta">{{ t.project.name }}{% if t.due_date %} · до {{ t.due_date|date:"d.m.Y" }}{% endif %}</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                  <span style="font-size:.72rem;color:var(--text-muted);white-space:nowrap">{{ t.progress }}%</span>
+                  <div class="mini-prog" style="flex:1;max-width:120px">
+                    <div class="mini-prog-fill" style="width:{{ t.progress }}%"></div>
+                  </div>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+              <span style="font-size:.82rem;color:var(--text-muted)">Нет активных задач</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="load-bar-wrap">
+              <div class="load-bar">
+                <div class="load-bar-fill" style="width:{{ row.load_percent }}%"></div>
+              </div>
+              <span class="load-pct">{{ row.load_percent }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-msg">Нет пользователей с профилем для отображения.</div>
+  {% endif %}
+</div>
+
+<!-- Overdue table -->
+<div class="section-card">
+  <div class="section-card-header">
+    <i class="fas fa-clock" style="color:var(--warning)"></i>
+    Просроченные задачи
+  </div>
+  {% if delay_rows %}
+  <div style="overflow-x:auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Исполнитель</th>
+          <th>Задача</th>
+          <th>Проект</th>
+          <th>Срок</th>
+          <th style="text-align:center">Дней</th>
+          <th>Пояснение</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in delay_rows %}
+        <tr>
+          <td><span class="employee-name">{{ d.assignee }}</span></td>
+          <td><a href="{% url 'task_detail' d.task.id %}" style="color:var(--primary);font-size:.875rem;font-weight:600;text-decoration:none">{{ d.task.title }}</a></td>
+          <td style="color:var(--text-muted);font-size:.82rem">{{ d.task.project.name }}</td>
+          <td style="font-size:.82rem">{{ d.task.due_date|date:"d.m.Y" }}</td>
+          <td style="text-align:center"><span class="late-badge">+{{ d.days_late }}</span></td>
+          <td style="font-size:.82rem;color:var(--text-secondary)">{{ d.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-msg" style="color:var(--success)"><i class="fas fa-check-circle" style="margin-right:6px"></i>Просроченных задач нет.</div>
+  {% endif %}
+</div>
+{% endblock %}

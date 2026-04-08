@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }} — Noda{% endblock %}
+
+{% block extra_css %}
+.detail-layout { display:grid; grid-template-columns:1fr 320px; gap:24px; align-items:start; }
+
+/* ─── breadcrumb ─────────────────────────────── */
+.breadcrumb { display:flex; align-items:center; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+.breadcrumb a { color:var(--text-muted); font-size:.82rem; text-decoration:none; transition:color var(--transition); }
+.breadcrumb a:hover { color:var(--primary); }
+.breadcrumb-sep { color:var(--text-muted); font-size:.75rem; }
+.breadcrumb-current { color:var(--text-primary); font-size:.82rem; font-weight:600; }
+
+/* ─── task header card ───────────────────────── */
+.task-hero {
+  background:linear-gradient(145deg, #3e2665, #5b3d8c);
+  border-radius:var(--radius-lg); padding:24px 28px; margin-bottom:20px;
+  display:flex; align-items:center; justify-content:space-between; gap:20px;
+}
+.task-hero-left h1 { font-size:1.3rem; font-weight:800; color:#fff; letter-spacing:-.3px; margin-bottom:6px; }
+.task-hero-meta { display:flex; flex-wrap:wrap; gap:12px; }
+.hero-meta-item { display:flex; align-items:center; gap:5px; font-size:.78rem; color:rgba(255,255,255,.7); }
+.task-hero-right { flex-shrink:0; text-align:center; }
+
+/* progress circle */
+.prog-ring { position:relative; width:72px; height:72px; }
+.prog-ring svg { transform:rotate(-90deg); }
+.prog-ring-bg   { fill:none; stroke:rgba(255,255,255,.2); stroke-width:6; }
+.prog-ring-fill { fill:none; stroke:#fff; stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset .4s; }
+.prog-ring-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:800; color:#fff; }
+
+/* ─── main card ──────────────────────────────── */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); }
+.card-body { padding:24px; }
+
+/* ─── tabs ───────────────────────────────────── */
+.tab-nav { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:24px; }
+.tab-btn {
+  padding:10px 20px; font-size:.875rem; font-weight:500; color:var(--text-muted);
+  background:none; border:none; border-bottom:2px solid transparent;
+  cursor:pointer; font-family:inherit; transition:color var(--transition), border-color var(--transition);
+  display:flex; align-items:center; gap:6px;
+}
+.tab-btn:hover { color:var(--primary); }
+.tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+.tab-badge { background:var(--primary-faint); color:var(--primary); font-size:.65rem; font-weight:700; padding:1px 6px; border-radius:100px; }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+
+/* ─── description ────────────────────────────── */
+.section-label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:10px; }
+.task-desc-text { font-size:.9rem; color:var(--text-secondary); line-height:1.75; }
+.divider { height:1px; background:var(--border); margin:20px 0; }
+
+/* ─── files ──────────────────────────────────── */
+.files-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.files-title { font-size:.875rem; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+.file-row {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 14px; border:1px solid var(--border);
+  border-radius:var(--radius-sm); margin-bottom:8px;
+  transition: border-color var(--transition);
+}
+.file-row:hover { border-color:var(--primary); }
+.file-icon-wrap { width:36px; height:36px; border-radius:8px; background:var(--primary-faint); display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:.9rem; flex-shrink:0; }
+.file-info { flex:1; min-width:0; }
+.file-name { font-size:.82rem; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.file-meta { font-size:.75rem; color:var(--text-muted); }
+.file-actions { display:flex; gap:6px; flex-shrink:0; }
+
+/* ─── related tasks ──────────────────────────── */
+.related-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; }
+.related-link { text-decoration:none; color:var(--text-primary); font-size:.875rem; font-weight:500; display:flex; align-items:center; gap:8px; transition:color var(--transition); }
+.related-link:hover { color:var(--primary); }
+
+/* ─── comments ───────────────────────────────── */
+.comment-form { display:flex; gap:12px; margin-bottom:20px; }
+.comment-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.comment-form-inner { flex:1; }
+.comment-textarea { width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:.875rem; resize:vertical; min-height:70px; outline:none; transition:border-color var(--transition), box-shadow var(--transition); }
+.comment-textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-faint); }
+.comment-submit { margin-top:8px; }
+
+.comment-card { display:flex; gap:12px; padding:14px 0; border-bottom:1px solid var(--border); }
+.comment-card:last-child { border-bottom:none; }
+.comment-body { flex:1; }
+.comment-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.comment-author { font-size:.82rem; font-weight:700; color:var(--text-primary); }
+.comment-date { font-size:.75rem; color:var(--text-muted); }
+.comment-text { font-size:.875rem; color:var(--text-secondary); line-height:1.65; }
+
+/* ─── history ────────────────────────────────── */
+.hist-item { display:flex; gap:12px; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--border); }
+.hist-item:last-child { border-bottom:none; padding-bottom:0; margin-bottom:0; }
+.hist-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; flex-shrink:0; }
+.hist-icon-plus      { background:#dcfce7; color:#166534; }
+.hist-icon-save      { background:#dbeafe; color:#1e40af; }
+.hist-icon-trash-alt { background:#fee2e2; color:#991b1b; }
+.hist-icon-comment   { background:#fef3c7; color:#92400e; }
+.hist-icon-paperclip { background:#cffafe; color:#0e7490; }
+.hist-icon-chart-line{ background:#dcfce7; color:#166534; }
+.hist-icon-link      { background:var(--primary-faint); color:var(--primary); }
+.hist-icon-edit      { background:var(--primary-faint); color:var(--primary); }
+.hist-name { font-size:.82rem; font-weight:700; color:var(--text-primary); }
+.hist-action { font-size:.82rem; color:var(--text-secondary); }
+.hist-date { font-size:.75rem; color:var(--text-muted); margin-top:2px; }
+
+/* ─── right panel ────────────────────────────── */
+.info-panel { position:sticky; top:calc(var(--header-h) + 16px); }
+.info-section { margin-bottom:20px; }
+.info-row { margin-bottom:14px; }
+.info-label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); margin-bottom:4px; }
+.info-value { font-size:.875rem; color:var(--text-primary); font-weight:500; }
+.access-notice {
+  display:flex; align-items:flex-start; gap:8px;
+  background:#fffbeb; border:1px solid #fde68a; border-radius:var(--radius-sm);
+  padding:10px 12px; font-size:.8rem; color:#92400e; margin-bottom:16px;
+}
+
+/* progress in panel */
+.panel-prog-wrap { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+.panel-prog-circle { position:relative; width:56px; height:56px; flex-shrink:0; }
+.panel-prog-circle svg { transform:rotate(-90deg); }
+.ppc-bg   { fill:none; stroke:var(--border); stroke-width:5; }
+.ppc-fill { fill:none; stroke:var(--primary); stroke-width:5; stroke-linecap:round; transition:stroke-dashoffset .4s; }
+.ppc-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:800; color:var(--primary); }
+
+input[type="range"] { width:100%; accent-color:var(--primary); margin:4px 0; }
+.disabled-input { background:var(--bg) !important; color:var(--text-muted) !important; cursor:not-allowed; opacity:.8; }
+
+@media (max-width:900px) { .detail-layout { grid-template-columns:1fr; } .info-panel { position:static; } }
+{% endblock %}
+
+{% block content %}
+<!-- breadcrumb -->
+<nav class="breadcrumb">
+  <a href="{% url 'projects' %}">Проекты</a>
+  <span class="breadcrumb-sep"><i class="fas fa-chevron-right" style="font-size:.6rem"></i></span>
+  <a href="{% url 'tasks' %}?project={{ task.project.id }}">{{ task.project.name }}</a>
+  <span class="breadcrumb-sep"><i class="fas fa-chevron-right" style="font-size:.6rem"></i></span>
+  <span class="breadcrumb-current">{{ task.title }}</span>
+</nav>
+
+<!-- hero -->
+<div class="task-hero">
+  <div class="task-hero-left">
+    <h1>{{ task.title }}</h1>
+    <div class="task-hero-meta">
+      <span class="hero-meta-item"><i class="fas fa-folder"></i>{{ task.project.name }}</span>
+      <span class="hero-meta-item"><i class="far fa-clock"></i>{{ task.created_at|date:"d M Y, H:i" }}</span>
+      {% if task.created_by %}
+        <span class="hero-meta-item"><i class="fas fa-user"></i>{{ task.created_by.get_full_name|default:task.created_by.username }}</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="task-hero-right">
+    <div class="prog-ring" id="headerRing">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle class="prog-ring-bg" cx="36" cy="36" r="29"/>
+        <circle class="prog-ring-fill" id="headerFill" cx="36" cy="36" r="29"
+          stroke-dasharray="182.2" stroke-dashoffset="182.2"/>
+      </svg>
+      <div class="prog-ring-text">{{ task.progress }}%</div>
+    </div>
+    <div style="margin-top:8px">
+      <span class="badge badge-{{ task.status }}" style="font-size:.75rem">{{ task.get_status_display }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="detail-layout">
+  <!-- ═══ LEFT: tabs ═══ -->
+  <div>
+    <div class="card">
+      <div class="card-body" style="padding-bottom:0">
+        <div class="tab-nav">
+          <button class="tab-btn active" onclick="switchTab('details',this)">Детали</button>
+          <button class="tab-btn" onclick="switchTab('comments',this)">
+            Комментарии <span class="tab-badge">{{ comments|length }}</span>
+          </button>
+          <button class="tab-btn" onclick="switchTab('history',this)">
+            История <span class="tab-badge">{{ history|length }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body" style="padding-top:0">
+
+        <!-- DETAILS -->
+        <div class="tab-pane active" id="tab-details">
+          <div class="section-label">Описание</div>
+          <p class="task-desc-text">{{ task.description|linebreaksbr|default:"Описание не указано." }}</p>
+
+          <div class="divider"></div>
+
+          <!-- Files -->
+          <div class="files-header">
+            <span class="files-title"><i class="fas fa-paperclip" style="color:var(--text-muted)"></i>Файлы <span class="tab-badge">{{ files|length }}</span></span>
+            {% if is_admin %}
+            <button class="btn btn-ghost btn-sm" onclick="openModal('uploadModal')"><i class="fas fa-upload"></i>Загрузить</button>
+            {% endif %}
+          </div>
+          {% if files %}
+            {% for f in files %}
+            <div class="file-row">
+              <div class="file-icon-wrap"><i class="fas {{ f.icon_class }}"></i></div>
+              <div class="file-info">
+                <div class="file-name">{{ f.original_name }}</div>
+                <div class="file-meta">{{ f.uploaded_by.get_full_name|default:f.uploaded_by.username }} · {{ f.uploaded_at|date:"d M Y" }} · {{ f.size_display }}</div>
+              </div>
+              <div class="file-actions">
+                <a href="{% url 'download_file' f.id %}" class="btn btn-ghost btn-sm"><i class="fas fa-download"></i></a>
+                {% if is_admin %}
+                <form method="post" style="display:inline">{% csrf_token %}
+                  <input type="hidden" name="action" value="delete_file"/>
+                  <input type="hidden" name="file_id" value="{{ f.id }}"/>
+                  <button type="submit" class="btn btn-danger-ghost btn-sm" onclick="return confirm('Удалить файл?')"><i class="fas fa-trash-alt"></i></button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p style="font-size:.82rem;color:var(--text-muted)">Файлов пока нет.</p>
+          {% endif %}
+
+          <div class="divider"></div>
+
+          <!-- Related tasks -->
+          <div class="files-header">
+            <span class="files-title"><i class="fas fa-link" style="color:var(--text-muted)"></i>Связанные задачи</span>
+            {% if is_admin and other_tasks %}
+            <button class="btn btn-ghost btn-sm" onclick="openModal('relatedModal')"><i class="fas fa-plus"></i>Добавить</button>
+            {% endif %}
+          </div>
+          {% if related_tasks %}
+            {% for rt in related_tasks %}
+            <div class="related-item">
+              <a href="{% url 'task_detail' rt.related.id %}" class="related-link">
+                <i class="fas fa-link" style="color:var(--text-muted);font-size:.75rem"></i>
+                {{ rt.related.title }}
+                <span class="badge badge-{{ rt.related.status }}">{{ rt.related.get_status_display }}</span>
+              </a>
+              {% if is_admin %}
+              <form method="post" style="display:inline">{% csrf_token %}
+                <input type="hidden" name="action" value="remove_related"/>
+                <input type="hidden" name="related_id" value="{{ rt.related.id }}"/>
+                <button type="submit" class="btn btn-danger-ghost btn-sm" onclick="return confirm('Убрать связь?')"><i class="fas fa-times"></i></button>
+              </form>
+              {% endif %}
+            </div>
+            {% endfor %}
+          {% else %}
+            <p style="font-size:.82rem;color:var(--text-muted)">Связанных задач нет.</p>
+          {% endif %}
+        </div>
+
+        <!-- COMMENTS -->
+        <div class="tab-pane" id="tab-comments">
+          <form method="post" class="comment-form">{% csrf_token %}
+            <input type="hidden" name="action" value="comment"/>
+            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode }}&size=64&background=5b3d8c&color=fff" class="comment-avatar"/>
+            <div class="comment-form-inner">
+              <textarea name="content" class="comment-textarea" placeholder="Написать комментарий..." required></textarea>
+              <div class="comment-submit">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i>Отправить</button>
+              </div>
+            </div>
+          </form>
+
+          {% for c in comments %}
+          <div class="comment-card">
+            <img src="https://ui-avatars.com/api/?name={{ c.author.get_full_name|urlencode }}&size=64&background=5b3d8c&color=fff" class="comment-avatar"/>
+            <div class="comment-body">
+              <div class="comment-header">
+                <span class="comment-author">{{ c.author.get_full_name|default:c.author.username }}</span>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span class="comment-date">{{ c.created_at|date:"d M Y, H:i" }}</span>
+                  {% if is_admin or c.author == request.user %}
+                  <form method="post" style="display:inline">{% csrf_token %}
+                    <input type="hidden" name="action" value="delete_comment"/>
+                    <input type="hidden" name="comment_id" value="{{ c.id }}"/>
+                    <button type="submit" class="btn btn-danger-ghost btn-sm" style="padding:2px 6px" onclick="return confirm('Удалить комментарий?')">
+                      <i class="fas fa-times" style="font-size:.7rem"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="comment-text">{{ c.content|linebreaksbr }}</div>
+            </div>
+          </div>
+          {% empty %}
+            <p style="font-size:.875rem;color:var(--text-muted)">Комментариев пока нет.</p>
+          {% endfor %}
+        </div>
+
+        <!-- HISTORY -->
+        <div class="tab-pane" id="tab-history">
+          {% for h in history %}
+          <div class="hist-item">
+            <div class="hist-icon hist-icon-{{ h.icon }}"><i class="fas fa-{{ h.icon }}"></i></div>
+            <div>
+              <div><span class="hist-name">{{ h.user.get_full_name|default:h.user.username }}</span> <span class="hist-action">{{ h.action }}</span></div>
+              <div class="hist-date">{{ h.created_at|date:"d M Y, H:i" }}</div>
+            </div>
+          </div>
+          {% empty %}
+            <p style="font-size:.875rem;color:var(--text-muted)">История пуста.</p>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT: info panel ═══ -->
+  <div class="info-panel">
+    <div class="card">
+      <div class="card-body">
+        <div class="section-label" style="margin-bottom:16px">Информация</div>
+
+        {% if not is_admin %}
+        <div class="access-notice">
+          <i class="fas fa-info-circle" style="margin-top:2px"></i>
+          Вы можете обновить только прогресс выполнения.
+        </div>
+        {% endif %}
+
+        {% if is_admin %}
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="update"/>
+          <div class="info-row">
+            <div class="info-label">Название</div>
+            <input type="text" name="title" class="form-control" value="{{ task.title }}" />
+          </div>
+          <div class="info-row">
+            <div class="info-label">Статус</div>
+            <select name="status" class="form-control">
+              {% for val, label in status_choices %}<option value="{{ val }}" {% if task.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Приоритет</div>
+            <select name="priority" class="form-control">
+              {% for val, label in priority_choices %}<option value="{{ val }}" {% if task.priority == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Исполнитель</div>
+            <select name="assigned_to" class="form-control">
+              <option value="">— не назначен —</option>
+              {% for u in all_users %}<option value="{{ u.id }}" {% if task.assigned_to.id == u.id %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Срок выполнения</div>
+            <input type="date" name="due_date" class="form-control" value="{{ task.due_date|date:'Y-m-d'|default:'' }}"/>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Прогресс: <span id="progValAdmin">{{ task.progress }}</span>%</div>
+            <input type="range" name="progress" min="0" max="100" value="{{ task.progress }}" oninput="syncProg(this.value,'admin')"/>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Создана</div>
+            <div class="info-value">{{ task.created_at|date:"d M Y" }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Обновлена</div>
+            <div class="info-value">{{ task.updated_at|date:"d M Y" }}</div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-w100"><i class="far fa-save"></i>Сохранить</button>
+        </form>
+        <form method="post" style="margin-top:8px">{% csrf_token %}
+          <input type="hidden" name="action" value="delete"/>
+          <button type="submit" class="btn btn-danger-ghost btn-w100" onclick="return confirm('Удалить задачу? Это действие необратимо.')">
+            <i class="fas fa-trash-alt"></i>Удалить задачу
+          </button>
+        </form>
+
+        {% else %}
+        <!-- read-only fields -->
+        {% for label, val in view_fields %}
+        <div class="info-row">
+          <div class="info-label">{{ label }}</div>
+          <div class="info-value">{{ val }}</div>
+        </div>
+        {% empty %}
+        <div class="info-row"><div class="info-label">Проект</div><div class="info-value">{{ task.project.name }}</div></div>
+        <div class="info-row"><div class="info-label">Статус</div><div class="info-value">{{ task.get_status_display }}</div></div>
+        <div class="info-row"><div class="info-label">Приоритет</div><div class="info-value">{{ task.get_priority_display }}</div></div>
+        <div class="info-row"><div class="info-label">Исполнитель</div><div class="info-value">{{ task.assigned_to.get_full_name|default:task.assigned_to.username|default:"—" }}</div></div>
+        <div class="info-row"><div class="info-label">Срок</div><div class="info-value">{{ task.due_date|date:"d.m.Y"|default:"—" }}</div></div>
+        {% endfor %}
+
+        <div class="divider"></div>
+        <!-- progress only -->
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="progress"/>
+          <div class="info-label">Прогресс: <span id="progValEmp">{{ task.progress }}</span>%</div>
+          <div class="panel-prog-wrap" style="margin-bottom:10px">
+            <div class="panel-prog-circle">
+              <svg width="56" height="56" viewBox="0 0 56 56">
+                <circle class="ppc-bg"   cx="28" cy="28" r="23"/>
+                <circle class="ppc-fill" id="empCircle" cx="28" cy="28" r="23"
+                  stroke-dasharray="144.5" stroke-dashoffset="144.5"/>
+              </svg>
+              <div class="ppc-text"><span id="empCircleText">{{ task.progress }}</span>%</div>
+            </div>
+            <div style="flex:1">
+              <input type="range" name="progress" min="0" max="100" value="{{ task.progress }}" oninput="syncProg(this.value,'emp')"/>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-w100"><i class="fas fa-chart-line"></i>Сохранить прогресс</button>
+        </form>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: upload file -->
+{% if is_admin %}
+<div class="modal-overlay" id="uploadModal" onclick="closeOnOverlay(event,'uploadModal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fas fa-upload" style="color:var(--primary);margin-right:8px"></i>Загрузить файл</span>
+      <button class="modal-close" onclick="closeModal('uploadModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <input type="hidden" name="action" value="upload"/>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Выберите файл (макс. 25 МБ)</label>
+          <input type="file" name="file" class="form-control" required/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('uploadModal')">Отмена</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i>Загрузить</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal: related task -->
+{% if is_admin and other_tasks %}
+<div class="modal-overlay" id="relatedModal" onclick="closeOnOverlay(event,'relatedModal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fas fa-link" style="color:var(--primary);margin-right:8px"></i>Связанная задача</span>
+      <button class="modal-close" onclick="closeModal('relatedModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post">{% csrf_token %}
+      <input type="hidden" name="action" value="add_related"/>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Выберите задачу</label>
+          <select name="related_task_id" class="form-control" required>
+            <option value="">— выберите задачу —</option>
+            {% for ot in other_tasks %}<option value="{{ ot.id }}">{{ ot.title }} ({{ ot.get_status_display }})</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('relatedModal')">Отмена</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-link"></i>Добавить</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CIRC_HEADER = 182.2, CIRC_EMP = 144.5;
+const progress = {{ task.progress }};
+
+// Init header ring
+(function(){
+  const el = document.getElementById('headerFill');
+  if (el) el.style.strokeDashoffset = CIRC_HEADER - (progress/100)*CIRC_HEADER;
+})();
+
+// Init employee circle
+(function(){
+  const el = document.getElementById('empCircle');
+  if (el) el.style.strokeDashoffset = CIRC_EMP - (progress/100)*CIRC_EMP;
+})();
+
+function syncProg(val, who) {
+  val = parseInt(val);
+  if (who === 'admin') {
+    var v = document.getElementById('progValAdmin');
+    if (v) v.textContent = val;
+  } else {
+    var v   = document.getElementById('progValEmp');
+    var c   = document.getElementById('empCircle');
+    var ct  = document.getElementById('empCircleText');
+    if (v)  v.textContent  = val;
+    if (c)  c.style.strokeDashoffset = CIRC_EMP - (val/100)*CIRC_EMP;
+    if (ct) ct.textContent = val;
+  }
+}
+
+// Tabs
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+{% endblock %}
