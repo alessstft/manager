@@ -12,6 +12,8 @@
 
 В первую очередь он регистрируется сам:
 
+<img width="1280" height="678" alt="image" src="https://github.com/user-attachments/assets/57f24bed-0141-4da1-b9ac-e47d76555d58" />
+
 <img width="681" height="325" alt="image" src="https://github.com/user-attachments/assets/61382812-2678-44ab-b7a0-d0a8808f313a" />
 
 
