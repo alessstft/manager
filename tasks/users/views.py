@@ -1,3 +1,7 @@
+"""! @file views.py
+@brief Authentication, employee onboarding and profile management views.
+"""
+
 from functools import wraps
 
 from django.conf import settings
@@ -18,6 +22,7 @@ from .models import Profile
 
 
 def company_admin_required(view_func):
+    """! @brief Restricts endpoint access to authenticated admins only."""
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -36,6 +41,7 @@ def company_admin_required(view_func):
 
 @ensure_csrf_cookie
 def login_view(request):
+    """! @brief Authenticates user and redirects to projects page."""
     if request.user.is_authenticated:
         return redirect('projects')
     if request.method == 'POST':
@@ -57,6 +63,7 @@ def login_view(request):
 
 
 def register(request):
+    """! @brief Registers the first administrator account."""
     if Profile.has_admin():
         return render(request, 'users/register_closed.html')
     if request.user.is_authenticated:
@@ -82,6 +89,7 @@ def register(request):
 @login_required
 @company_admin_required
 def admin_create_employee(request):
+    """! @brief Admin-only endpoint for creating employee accounts."""
     if request.method == 'POST':
         form = AdminCreateEmployeeForm(request.POST)
         if form.is_valid():
@@ -106,6 +114,7 @@ def admin_create_employee(request):
 
 @login_required
 def profile_view(request):
+    """! @brief Displays and updates current user profile."""
     try:
         profile = request.user.profile
     except Profile.DoesNotExist:

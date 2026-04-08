@@ -1,0 +1,6 @@
+var searchData=
+[
+  ['verbose_5fname_0',['verbose_name',['../classnew_1_1models_1_1_project_1_1_meta.html#ae01c6949ba73e384ba1d7537978ead8f',1,'new.models.Project.Meta.verbose_name'],['../classnew_1_1models_1_1_task_1_1_meta.html#a9ccf6bb95c4f4fde244a4c89aa077e44',1,'new.models.Task.Meta.verbose_name'],['../classnew_1_1models_1_1_related_task_1_1_meta.html#ac8199c1edd16c98541549d9b49fbb8e5',1,'new.models.RelatedTask.Meta.verbose_name'],['../classnew_1_1models_1_1_comment_1_1_meta.html#a91b7dcedaf52b3ef69c1fbf42f542f74',1,'new.models.Comment.Meta.verbose_name']]],
+  ['verbose_5fname_5fplural_1',['verbose_name_plural',['../classnew_1_1models_1_1_project_1_1_meta.html#a91020a8e4f54fd678ac382313229bedb',1,'new.models.Project.Meta.verbose_name_plural'],['../classnew_1_1models_1_1_task_1_1_meta.html#a5e97e4addb95381ac2ed0bef4c4f97fa',1,'new.models.Task.Meta.verbose_name_plural'],['../classnew_1_1models_1_1_related_task_1_1_meta.html#acfa2d9099c6c5aa3aec532eb1682bd48',1,'new.models.RelatedTask.Meta.verbose_name_plural'],['../classnew_1_1models_1_1_comment_1_1_meta.html#a7246c61a6993930b65db680f3566a4b5',1,'new.models.Comment.Meta.verbose_name_plural']]],
+  ['views_2epy_2',['views.py',['../new_2views_8py.html',1,'(Global Namespace)'],['../users_2views_8py.html',1,'(Global Namespace)']]]
+];

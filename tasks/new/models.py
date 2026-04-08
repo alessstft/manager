@@ -1,9 +1,14 @@
+"""! @file models.py
+@brief Domain models for projects, tasks and task history.
+"""
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
 
 class Project(models.Model):
+    """! @brief Project entity that groups tasks and team members."""
     PRIORITY_CHOICES = [
         ('low', 'Низкий'),
         ('medium', 'Средний'),
@@ -28,15 +33,19 @@ class Project(models.Model):
         verbose_name_plural = 'Проекты'
 
     def __str__(self):
+        """! @brief Returns readable project name."""
         return self.name
 
     def task_count(self):
+        """! @brief Counts all tasks in the project."""
         return self.tasks.count()
 
     def done_count(self):
+        """! @brief Counts tasks marked as done."""
         return self.tasks.filter(status='done').count()
 
     def progress(self):
+        """! @brief Calculates completion percentage for the project."""
         total = self.task_count()
         if total == 0:
             return 0
@@ -44,6 +53,7 @@ class Project(models.Model):
 
 
 class Task(models.Model):
+    """! @brief Work item linked to a specific project."""
     STATUS_CHOICES = [
         ('todo', 'К выполнению'),
         ('in_progress', 'В работе'),
@@ -76,16 +86,20 @@ class Task(models.Model):
         verbose_name_plural = 'Задачи'
 
     def __str__(self):
+        """! @brief Returns task title."""
         return self.title
 
     def status_color(self):
+        """! @brief Returns Bootstrap color by task status."""
         return {'todo': 'secondary', 'in_progress': 'info', 'review': 'warning', 'done': 'success'}.get(self.status, 'secondary')
 
     def priority_color(self):
+        """! @brief Returns Bootstrap color by task priority."""
         return {'low': 'success', 'medium': 'warning', 'high': 'danger'}.get(self.priority, 'secondary')
 
 
 class RelatedTask(models.Model):
+    """! @brief M2M-like link between two related tasks."""
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='related_tasks')
     related = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='related_to')
 
@@ -96,6 +110,7 @@ class RelatedTask(models.Model):
 
 
 class Comment(models.Model):
+    """! @brief User comment attached to a task."""
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
@@ -107,14 +122,17 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
+        """! @brief Returns compact comment identifier."""
         return f'{self.author.username} → {self.task.title}'
 
 
 def task_file_path(instance, filename):
+    """! @brief Builds upload path for a task attachment."""
     return f'task_files/{instance.task.id}/{filename}'
 
 
 class TaskFile(models.Model):
+    """! @brief File uploaded to a task."""
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='files')
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
     file = models.FileField(upload_to=task_file_path)
@@ -125,6 +143,7 @@ class TaskFile(models.Model):
         ordering = ['-uploaded_at']
 
     def size_display(self):
+        """! @brief Human-readable file size."""
         try:
             size = self.file.size
         except Exception:
@@ -136,6 +155,7 @@ class TaskFile(models.Model):
         return f'{size // (1024 * 1024)} МБ'
 
     def icon_class(self):
+        """! @brief Font Awesome icon class based on extension."""
         ext = self.original_name.rsplit('.', 1)[-1].lower() if '.' in self.original_name else ''
         return {
             'pdf': 'fa-file-pdf', 'doc': 'fa-file-word', 'docx': 'fa-file-word',
@@ -147,6 +167,7 @@ class TaskFile(models.Model):
 
 
 class HistoryEntry(models.Model):
+    """! @brief Timeline event for changes in a task."""
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='history')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     action = models.CharField(max_length=500)

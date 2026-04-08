@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['task_5fcount_0',['task_count',['../classnew_1_1models_1_1_project.html#a1875cabcdefb36317107593dbf67fe64',1,'new::models::Project']]],
+  ['task_5fdetail_1',['task_detail',['../namespacenew_1_1views.html#a0d345c95f2005f89a86ddc95f16bb327',1,'new::views']]],
+  ['task_5ffile_5fpath_2',['task_file_path',['../namespacenew_1_1models.html#ac649d2fc85996dc2efbef28d51e2f233',1,'new::models']]],
+  ['tasks_5flist_3',['tasks_list',['../namespacenew_1_1views.html#aa7cedcce3d6545a5b4f52852a9b1507c',1,'new::views']]],
+  ['team_4',['team',['../namespacenew_1_1views.html#a093dc1616ad9eb8a0cc4aa64c35cf0d6',1,'new::views']]],
+  ['test_5fhas_5fadmin_5ffalse_5fby_5fdefault_5',['test_has_admin_false_by_default',['../classusers_1_1tests_1_1_test_profile_model.html#aa45a809f00f526614a18286f21fdab1b',1,'users::tests::TestProfileModel']]],
+  ['test_5fhas_5fadmin_5ftrue_5fwhen_5fadmin_5fexists_6',['test_has_admin_true_when_admin_exists',['../classusers_1_1tests_1_1_test_profile_model.html#a2c9cbfe7c2d01cfc334a06e6a6e7d70b',1,'users::tests::TestProfileModel']]],
+  ['test_5fhome_5fpage_5fis_5favailable_7',['test_home_page_is_available',['../classnew_1_1tests_1_1_test_new_views_smoke.html#ac50ebf092f1873d426236c2bf4d6e79a',1,'new::tests::TestNewViewsSmoke']]],
+  ['test_5flogged_5fin_5fuser_5fcan_5fcreate_5fproject_8',['test_logged_in_user_can_create_project',['../classnew_1_1tests_1_1_test_new_views_smoke.html#adfa04bb1f1058267b6e3fc403788604c',1,'new::tests::TestNewViewsSmoke']]],
+  ['test_5flogin_5fpage_5fis_5favailable_9',['test_login_page_is_available',['../classusers_1_1tests_1_1_test_user_views_smoke.html#ad8eb20ad7bdf0922a4d95dda85434ab7',1,'users::tests::TestUserViewsSmoke']]],
+  ['test_5fprofile_5fpage_5fworks_5ffor_5flogged_5fuser_10',['test_profile_page_works_for_logged_user',['../classusers_1_1tests_1_1_test_user_views_smoke.html#a099eb76def02911f3590fb216c00335b',1,'users::tests::TestUserViewsSmoke']]],
+  ['test_5fprofile_5frequires_5flogin_11',['test_profile_requires_login',['../classusers_1_1tests_1_1_test_user_views_smoke.html#a3215b995b30ae7ddd6ee05338e44b33a',1,'users::tests::TestUserViewsSmoke']]],
+  ['test_5fprogress_5fcounts_5fonly_5fdone_5ftasks_12',['test_progress_counts_only_done_tasks',['../classnew_1_1tests_1_1_test_project_model.html#a08ae1211c389653c1519402a112a3485',1,'new::tests::TestProjectModel']]],
+  ['test_5fprogress_5fis_5fzero_5fwithout_5ftasks_13',['test_progress_is_zero_without_tasks',['../classnew_1_1tests_1_1_test_project_model.html#aaa8192f234cc334088d5d3d2b4846f26',1,'new::tests::TestProjectModel']]],
+  ['test_5fprojects_5frequires_5flogin_14',['test_projects_requires_login',['../classnew_1_1tests_1_1_test_new_views_smoke.html#a0fd10f8bbb1c7dbe60e13d843d3995d8',1,'new::tests::TestNewViewsSmoke']]],
+  ['test_5fstatus_5fand_5fpriority_5fcolors_15',['test_status_and_priority_colors',['../classnew_1_1tests_1_1_test_task_model.html#acbcf5bc3934583dd62198d8073c85b2f',1,'new::tests::TestTaskModel']]]
+];

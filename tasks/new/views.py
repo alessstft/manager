@@ -1,3 +1,7 @@
+"""! @file views.py
+@brief HTTP views for projects, tasks and workload dashboards.
+"""
+
 import os
 from functools import wraps
 
@@ -19,6 +23,7 @@ from .models import Comment, HistoryEntry, Project, RelatedTask, Task, TaskFile
 # ─── helpers ────────────────────────────────────────────────
 
 def _is_admin(user):
+    """! @brief Checks whether the user has admin role."""
     try:
         return user.profile.role == Profile.Role.ADMIN
     except Profile.DoesNotExist:
@@ -26,6 +31,7 @@ def _is_admin(user):
 
 
 def _can_access_task(user, task):
+    """! @brief Verifies task visibility for admins and project members."""
     if _is_admin(user):
         return True
     if task.assigned_to_id == user.id or task.created_by_id == user.id:
@@ -39,9 +45,11 @@ def _can_access_task(user, task):
 
 
 def _uname(user):
+    """! @brief Returns full name or username fallback."""
     return user.get_full_name().strip() or user.username
 
 def _hist(task, user, action, icon='edit'):
+    """! @brief Stores a single history event for a task."""
     HistoryEntry.objects.create(task=task, user=user, action=action, icon=icon)
 
 
@@ -56,6 +64,7 @@ def _new_app_db_ready():
 
 
 def _db_schema_setup_response(request):
+    """! @brief Renders migration/setup instructions page."""
     ctx = {}
     eng = settings.DATABASES['default'].get('ENGINE', '')
     if 'sqlite' in eng:
@@ -64,6 +73,7 @@ def _db_schema_setup_response(request):
 
 
 def require_new_app_db(view_func):
+    """! @brief Decorator that blocks views until app tables exist."""
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
         if not _new_app_db_ready():
@@ -76,6 +86,7 @@ def require_new_app_db(view_func):
 # ─── index ──────────────────────────────────────────────────
 
 def index(request):
+    """! @brief Landing page with registration availability status."""
     return render(request, 'index.html', {'admin_registered': Profile.has_admin()})
 
 
@@ -84,6 +95,7 @@ def index(request):
 @login_required
 @require_new_app_db
 def projects(request):
+    """! @brief Project list page and project creation handler."""
     if _is_admin(request.user):
         qs = Project.objects.all()
     else:
@@ -140,6 +152,7 @@ def projects(request):
 @require_new_app_db
 @require_POST
 def delete_project(request, project_id):
+    """! @brief Deletes a project owned by current user or admin."""
     project = get_object_or_404(Project, id=project_id)
     if project.owner != request.user and not _is_admin(request.user):
         messages.error(request, 'Нет прав для удаления.')
@@ -154,6 +167,7 @@ def delete_project(request, project_id):
 @require_new_app_db
 @require_POST
 def edit_project(request, project_id):
+    """! @brief Updates project fields and assignment."""
     project = get_object_or_404(Project, id=project_id)
     if project.owner != request.user and not _is_admin(request.user):
         messages.error(request, 'Нет прав для редактирования.')
@@ -181,6 +195,7 @@ def edit_project(request, project_id):
 @login_required
 @require_new_app_db
 def create_project(request):
+    """! @brief Creates a project from dedicated form endpoint."""
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
@@ -211,6 +226,7 @@ def create_project(request):
 @login_required
 @require_new_app_db
 def tasks_list(request):
+    """! @brief Task board view with filters and task creation for admins."""
     if _is_admin(request.user):
         task_qs = Task.objects.select_related('project', 'assigned_to', 'created_by').all()
     else:
@@ -291,6 +307,7 @@ def tasks_list(request):
 @login_required
 @require_new_app_db
 def task_detail(request, task_id):
+    """! @brief Task details page with updates, comments and history."""
     task = get_object_or_404(
         Task.objects.select_related('project', 'assigned_to', 'created_by'),
         id=task_id,
@@ -360,6 +377,7 @@ def task_detail(request, task_id):
 @login_required
 @require_new_app_db
 def download_file(request, file_id):
+    """! @brief Downloads task attachment if user has access."""
     tf = get_object_or_404(TaskFile.objects.select_related('task__project'), id=file_id)
     if not _can_access_task(request.user, tf.task):
         messages.error(request, 'Нет доступа к файлу.')
@@ -369,6 +387,7 @@ def download_file(request, file_id):
 
 @login_required
 def team(request):
+    """! @brief Team page grouped by role."""
     employees = User.objects.select_related('profile').filter(profile__role=Profile.Role.EMPLOYEE)
     admins    = User.objects.select_related('profile').filter(profile__role=Profile.Role.ADMIN)
     return render(request, 'team.html', {'employees': employees, 'admins': admins})
@@ -377,7 +396,7 @@ def team(request):
 @login_required
 @require_new_app_db
 def workload(request):
-    """Актуальная нагрузка по задачам и просрочки (данные из БД)."""
+    """! @brief Computes workload and overdue metrics for dashboard."""
     today = timezone.localdate()
     is_admin = _is_admin(request.user)
 

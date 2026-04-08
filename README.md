@@ -56,3 +56,58 @@
 
 ![image](https://github.com/user-attachments/assets/9c32e596-33e4-4f5e-a9ce-d45c405e308d)
 
+## Быстрый запуск (локально)
+
+1. Установите Python 3.12+.
+2. Установите зависимости:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Выполните миграции:
+
+```bash
+python tasks/manage.py migrate
+```
+
+4. Запустите сервер:
+
+```bash
+python tasks/manage.py runserver
+```
+
+Приложение будет доступно по адресу `http://127.0.0.1:8000/`.
+
+## Тестирование и сборка
+
+- Локальный запуск тестов:
+  - `python tasks/manage.py test new users`
+- Проверка, что миграции актуальны:
+  - `python tasks/manage.py makemigrations --check --dry-run`
+- CI запускается через GitHub Actions из файла `.github/workflows/ci.yml` и выполняет:
+  - установку зависимостей;
+  - проверку миграций;
+  - автоматические тесты;
+  - сборку ZIP-артефакта релиза.
+
+## Документация кода (Doxygen)
+
+Для генерации документации используется файл `Doxyfile` и Doxygen-совместимые комментарии в Python-коде.
+
+```bash
+doxygen Doxyfile
+```
+
+HTML-документация будет создана в каталоге `docs/doxygen/html`.
+
+## Инструкция по выпуску релиза
+
+1. Убедитесь, что тесты проходят:
+   - `python tasks/manage.py test new users`
+2. Создайте ZIP-артефакт (локально):
+   - `git archive --format=zip --output=release-artifact.zip HEAD`
+3. Создайте тег:
+   - `git tag vX.Y.Z`
+4. Опубликуйте релиз с артефактом:
+   - `gh release create vX.Y.Z release-artifact.zip --title "vX.Y.Z" --notes "Release vX.Y.Z"`
